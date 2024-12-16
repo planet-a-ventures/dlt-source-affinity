@@ -14,10 +14,10 @@ Resources that can be loaded using this verified source are:
 
 | Name      | Description                                                            | API version | [Permissions](https://developer.affinity.co/#section/Getting-Started/Permissions) needed |
 | --------- | ---------------------------------------------------------------------- | --- | --- |
-| [companies](https://developer.affinity.co/#tag/companies) | The stored companies | V2 |                                                  | Requires the "Export All Organizations directory" permission. |
-| [persons](https://developer.affinity.co/#tag/persons)   | The stored persons | V2 |                                                    | Requires the "Export All People directory" permission. |
-| [lists](https://developer.affinity.co/#tag/lists)     | A given list and/or a saved view of a list | V2 |                            | Requires the "Export data from Lists" permission. |
-| [notes](https://api-docs.affinity.co/#notes)     | Notes attached to companies, persons, opportunities | Legacy |                   | n/a |
+| [companies](https://developer.affinity.co/#tag/companies) | The stored companies | V2 | Requires the "Export All Organizations directory" permission. |
+| [persons](https://developer.affinity.co/#tag/persons)   | The stored persons | V2 | Requires the "Export All People directory" permission. |
+| [lists](https://developer.affinity.co/#tag/lists)     | A given list and/or a saved view of a list | V2 | Requires the "Export data from Lists" permission. |
+| [notes](https://api-docs.affinity.co/#notes)     | Notes attached to companies, persons, opportunities | Legacy | n/a |
 
 ## V1 vs V2
 
