@@ -1,0 +1,4 @@
+api_base = "https://api.affinity.co"
+
+[runtime]
+log_level="INFO"
