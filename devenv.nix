@@ -1,4 +1,10 @@
-{ pkgs, lib, config, inputs, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  inputs,
+  ...
+}:
 
 {
   # https://devenv.sh/packages/
@@ -21,16 +27,14 @@
   '';
 
   git-hooks.hooks = {
-    # lint shell scripts
     shellcheck.enable = true;
-
-    # format Python code
     black.enable = true;
-
-        typos.enable = true;
-        yamllint.enable = true;
-        yamlfmt.enable = true;    
-        check-toml.enable = true;
+    typos.enable = true;
+    yamllint.enable = true;
+    yamlfmt.enable = true;
+    check-toml.enable = true;
+    commitizen.enable = true;
+    nixfmt-rfc-style.enable = true;
   };
 
 }
