@@ -7,10 +7,8 @@ import dlt
 from dlt.common.typing import TDataItem
 from dlt.sources import DltResource
 from dlt.extract.items import DataItemWithMeta
-from dlt.common.logger import log_level, is_logging
-
+from dlt.common.logger import log_level, is_logging, logger
 from pydantic import TypeAdapter
-
 from .rest_client import (
     get_v1_rest_client,
     get_v2_rest_client,
@@ -31,6 +29,20 @@ if is_logging():
     )
 
     logging.getLogger("urllib3").setLevel(log_level())
+
+    # ignore https://github.com/dlt-hub/dlt/blob/268768f78bd7ea7b2df8ca0722faa72d4d4614c5/dlt/extract/hints.py#L390-L393
+    class HideSpecificWarning(logging.Filter):
+        def filter(self, record):
+            if (
+                "A data item validator was created from column schema"
+                in record.getMessage()
+            ):
+                return False  # Filter out this log
+            return True  # Allow all other logs
+
+    logger = logging.getLogger("dlt")
+    logger.addFilter
+    logger.addFilter(HideSpecificWarning())
 
 LISTS_LITERAL = Literal["lists"]
 ENTITY = Literal["companies", "persons", "opportunities"]
