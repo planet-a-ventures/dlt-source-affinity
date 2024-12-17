@@ -9,8 +9,7 @@ from dlt.sources.helpers.rest_client.paginators import (
 )
 
 from .type_adapters import error_adapter
-from .settings import V2_PREFIX
-import requests
+from .settings import API_BASE, V2_PREFIX
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from dlt.sources.helpers.requests.session import Session
@@ -21,7 +20,7 @@ def create_session_with_retries(
     backoff_factor=1,
     status_forcelist=(500, 502, 503, 504),
     allowed_methods=("GET", "POST", "PUT", "DELETE"),
-    api_base: str = dlt.config["api_base"],
+    api_base: str = API_BASE,
 ):
     session = Session(raise_for_status=False)
 
@@ -51,7 +50,7 @@ session = create_session_with_retries(total_retries=5, backoff_factor=0.5)
 
 def get_v2_rest_client(
     api_key: str = dlt.secrets["affinity_api_key"],
-    api_base: str = dlt.config["api_base"],
+    api_base: str = API_BASE,
 ):
     return RESTClient(
         base_url=f"{api_base}{V2_PREFIX}",
@@ -64,7 +63,7 @@ def get_v2_rest_client(
 
 def get_v1_rest_client(
     api_key: str = dlt.secrets["affinity_api_key"],
-    api_base: str = dlt.config["api_base"],
+    api_base: str = API_BASE,
 ):
     return RESTClient(
         base_url=api_base,
