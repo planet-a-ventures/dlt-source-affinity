@@ -21,7 +21,7 @@ affinity_api_key="<YOUR_API_KEY>"
 and then run the default source with optional list references:
 
 ```py
-from dlt-source-affinity import ListReference, source as affinity_source
+from dlt_source_affinity import ListReference, source as affinity_source
 
 pipeline = dlt.pipeline(
    pipeline_name="affinity_pipeline",

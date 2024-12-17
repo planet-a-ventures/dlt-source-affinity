@@ -23,13 +23,6 @@ from .helpers import ListReference, generate_list_entries_path
 
 
 if is_logging():
-    logging.basicConfig(
-        level=logging.DEBUG,  # Set the global logging level to DEBUG
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",  # Log format
-    )
-
-    logging.getLogger("urllib3").setLevel(log_level())
-
     # ignore https://github.com/dlt-hub/dlt/blob/268768f78bd7ea7b2df8ca0722faa72d4d4614c5/dlt/extract/hints.py#L390-L393
     class HideSpecificWarning(logging.Filter):
         def filter(self, record):
