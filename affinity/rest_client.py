@@ -10,6 +10,43 @@ from dlt.sources.helpers.rest_client.paginators import (
 
 from .type_adapters import error_adapter
 from .settings import V2_PREFIX
+import requests
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
+from dlt.sources.helpers.requests.session import Session
+
+
+def create_session_with_retries(
+    total_retries=3,
+    backoff_factor=1,
+    status_forcelist=(500, 502, 503, 504),
+    allowed_methods=("GET", "POST", "PUT", "DELETE"),
+    api_base: str = dlt.config["api_base"],
+):
+    session = Session(raise_for_status=False)
+
+    # Configure Retry
+    retries = Retry(
+        total=total_retries,  # Total number of retries
+        backoff_factor=backoff_factor,  # Delay between retries: backoff_factor * (2 ** retry_attempt)
+        status_forcelist=status_forcelist,  # HTTP status codes to retry on
+        allowed_methods=allowed_methods,  # HTTP methods that are retried
+        raise_on_status=False,  # Set to False to avoid raising errors on retriable status codes
+    )
+
+    # Attach the Retry configuration to the HTTPAdapter
+    adapter = HTTPAdapter(
+        max_retries=retries,
+        pool_connections=1,
+        pool_maxsize=100,
+    )
+    session.mount(api_base, adapter)
+
+    return session
+
+
+# Create a session with retries
+session = create_session_with_retries(total_retries=5, backoff_factor=0.5)
 
 
 def get_v2_rest_client(
@@ -21,6 +58,7 @@ def get_v2_rest_client(
         auth=BearerTokenAuth(api_key),
         data_selector="data",
         paginator=JSONLinkPaginator("pagination.nextUrl"),
+        session=session,
     )
 
 
@@ -34,6 +72,7 @@ def get_v1_rest_client(
         paginator=JSONResponseCursorPaginator(
             cursor_path="next_page_token", cursor_param="page_token"
         ),
+        session=session,
     )
 
 
