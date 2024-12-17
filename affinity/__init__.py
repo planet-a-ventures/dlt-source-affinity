@@ -341,3 +341,6 @@ def source(
         lists,
         *list_resources,
     )
+
+
+__all__ = ["source", "ListReference"]

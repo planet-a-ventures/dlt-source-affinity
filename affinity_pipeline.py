@@ -1,5 +1,5 @@
 import dlt
-from affinity import ListReference, source
+from .affinity import ListReference, source
 
 
 def load_affinity_data() -> None:
