@@ -8,7 +8,37 @@ keywords: [Affinity API, affinity.co, CRM]
 [DLT](htps://www.github.com/dlt-hub/dlt) source for [Affinity](https://www.affinity.co/).
 
 
+Usage:
 
+```py
+from dlt-source-affinity import ListReference, source as affinity_source
+
+pipeline = dlt.pipeline(
+   pipeline_name="affinity_pipeline", destination="duckdb", dev_mode=True
+)
+affinity_data = affinity_source(
+
+   # By default the data source loads:
+   # - organizations
+   # - persons
+   # - lists
+   # - opportunities
+   # - notes
+   # And then we can optionally pass an arbitrary number of lists and list views:
+   list_refs=[
+      # Loads a list with ID 123,
+      # e.g. https://<your-subdomain>.affinity.co/lists/123/
+      ListReference(123),
+      # Loads a view with ID 456 in list 123,
+      # e.g. https://<your-subdomain>.affinity.co/lists/123/views/456-all-organizations 
+      ListReference(247888, 1869904),
+   ]
+)
+info = pipeline.run(affinity_data)
+```
+
+
+## Resources
 
 Resources that can be loaded using this verified source are:
 
