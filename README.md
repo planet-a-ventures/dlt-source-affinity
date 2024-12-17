@@ -10,6 +10,14 @@ keywords: [Affinity API, affinity.co, CRM]
 
 Usage:
 
+Create a `.dlt/secrets.toml` with your [API key](https://support.affinity.co/s/article/How-to-obtain-your-Affinity-API-key):
+
+```toml
+affinity_api_key="<YOUR_API_KEY>"
+```
+
+and then run the default source with optional list references:
+
 ```py
 from dlt-source-affinity import ListReference, source as affinity_source
 
