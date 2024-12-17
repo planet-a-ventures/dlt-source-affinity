@@ -9,14 +9,12 @@ log() {
 }
 
 main() {
-
     pushd "${SCRIPT_DIR}" >/dev/null
 
     local python_version
     python_version=$(./current_python_major_minor.py)
 
     log "Current Python version: ${python_version}"
-
 
     datamodel-codegen \
         --input v2_spec.json \
