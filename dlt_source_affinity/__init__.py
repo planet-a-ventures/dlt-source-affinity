@@ -24,6 +24,8 @@ from .helpers import ListReference, generate_list_entries_path
 
 if is_logging():
     # ignore https://github.com/dlt-hub/dlt/blob/268768f78bd7ea7b2df8ca0722faa72d4d4614c5/dlt/extract/hints.py#L390-L393
+    # This warning is thrown because of using Pydantic models as the column schema in a table variant
+    # The reason we need to use variants, however, is https://github.com/dlt-hub/dlt/pull/2109
     class HideSpecificWarning(logging.Filter):
         def filter(self, record):
             if (
@@ -70,6 +72,14 @@ def __create_id_resource(
     datacls = get_entity_data_class(entity)
 
     @dlt.resource(
+        # This is only a helper resource to improve performance
+        # by avoiding paging with a cursor, e.g. this resource
+        # pages over entities, yielding chunks of entity IDs, but not
+        # pulling field data (which takes longer).
+        # A downstream resource then picks up the chunks of IDs and can request
+        # field data in parallel, as we don't need to follow a pagination
+        # cursor
+        selected=False,
         write_disposition="replace",
         primary_key="id",
         columns=datacls,
@@ -113,37 +123,52 @@ def notes():
     )
 
 
+def get_dropdown_options_table(field: FieldModel) -> str:
+    return f"dropdown_options_{field.id}"
+
+
 def mark_dropdown_item(
     dropdown_item: Dropdown | RankedDropdown, field: FieldModel
 ) -> DataItemWithMeta:
     return dlt.mark.with_hints(
-        item=dropdown_item.model_dump(),
+        item=dropdown_item.model_dump() | {"_dlt_id": dropdown_item.dropdownOptionId},
         hints=dlt.mark.make_hints(
-            table_name=f"dropdown_options_{field.id}",
+            table_name=get_dropdown_options_table(field),
             write_disposition="merge",
             primary_key="dropdownOptionId",
             merge_key="dropdownOptionId",
             columns=type(dropdown_item),
         ),
+        # needs to be a variant due to https://github.com/dlt-hub/dlt/pull/2109
         create_table_variant=True,
     )
 
 
 def process_and_yield_fields(
-    entity: Company | Person | OpportunityWithFields, ret: Dict[str, Any]
+    entity: Company | Person | OpportunityWithFields,
+    ret: Dict[str, Any],
+    origin_table: ENTITY | str,
 ) -> Generator[DataItemWithMeta, None, None]:
     if not entity.fields:
         return
     for field in entity.fields:
         yield dlt.mark.with_hints(
             item=field.model_dump(exclude={"value"})
-            | {"value_type": field.value.root.type},
+            | {"value_type": field.value.root.type, "_dlt_id": field.id},
             hints=dlt.mark.make_hints(
                 table_name=f"fields",
                 write_disposition="merge",
                 primary_key="id",
                 merge_key="id",
+                references=[
+                    {
+                        "columns": ["id"],
+                        "referenced_table": origin_table,
+                        "referenced_columns": ["id"],
+                    }
+                ],
             ),
+            # needs to be a variant due to https://github.com/dlt-hub/dlt/pull/2109
             create_table_variant=True,
         )
         new_column = (
@@ -176,21 +201,20 @@ def process_and_yield_fields(
                 interaction = value.data.root
                 ret[new_column] = interaction.model_dump(include={"id", "type"})
                 yield dlt.mark.with_hints(
-                    item=value.data,
+                    item=interaction.model_dump() | {"_dlt_id": interaction.id},
                     hints=dlt.mark.make_hints(
                         table_name=f"interactions_{interaction.type}",
                         write_disposition="merge",
                         primary_key="id",
                         merge_key="id",
                     ),
+                    # needs to be a variant due to https://github.com/dlt-hub/dlt/pull/2109
                     create_table_variant=True,
                 )
             case PersonValue() | CompanyValue():
-                ret[new_column] = value.data.id if value.data else None
+                ret[new_column] = value.data
             case PersonsValue() | CompaniesValue():
-                ret[f"{new_column}_id"] = (
-                    [e.id for e in value.data] if value.data else []
-                )
+                ret[new_column] = value.data if value.data else []
             case (
                 TextValue()
                 | FloatValue()
@@ -203,6 +227,14 @@ def process_and_yield_fields(
                 ret[new_column] = value.data
             case _:
                 raise ValueError(f"Value type {value} not implemented")
+
+
+# TODO: Workaround for the fact that when `add_limit` is used, the yielded entities
+# become dicts instead of first-class entities
+def __get_id(obj):
+    if isinstance(obj, dict):
+        return obj.get("id")
+    return getattr(obj, "id", None)
 
 
 def __create_entity_resource(entity_name: ENTITY) -> DltResource:
@@ -227,14 +259,7 @@ def __create_entity_resource(entity_name: ENTITY) -> DltResource:
     ) -> Iterable[TDataItem]:
         rest_client = get_v2_rest_client()
 
-        # TODO: Workaround for the fact that when `add_limit` is used, the yielded entities
-        # become dicts instead of first-class entities
-        def get_id(obj):
-            if isinstance(obj, dict):
-                return obj.get("id")
-            return getattr(obj, "id", None)
-
-        ids = [get_id(x) for x in entity_arr]
+        ids = [__get_id(x) for x in entity_arr]
         response = rest_client.get(
             entity_name,
             params={
@@ -253,8 +278,11 @@ def __create_entity_resource(entity_name: ENTITY) -> DltResource:
 
         for e in entities.data:
             ret: Dict[str, Any] = {}
-            yield from process_and_yield_fields(e, ret)
-            yield dlt.mark.with_table_name(e.model_dump(exclude={"fields"}) | ret, name)
+            yield from process_and_yield_fields(e, ret, name)
+            # TODO: dynamically create references
+            yield dlt.mark.with_table_name(
+                e.model_dump(exclude={"fields"}) | ret | {"_dlt_id": e.id}, name
+            )
 
     __entities.__name__ = name
     __entities.__qualname__ = name
@@ -307,9 +335,9 @@ def __create_list_entries_resource(list_ref: ListReference):
             for list_entry in list_entries:
                 e = list_entry.root
                 ret: Dict[str, Any] = {"entity_id": e.entity.id}
-                yield from process_and_yield_fields(e.entity, ret)
+                yield from process_and_yield_fields(e.entity, ret, name)
                 yield dlt.mark.with_table_name(
-                    e.model_dump(exclude={"entity"}) | ret, name
+                    e.model_dump(exclude={"entity"}) | ret | {"_dlt_id": e.id}, name
                 )
 
     __list_entries.__name__ = name
