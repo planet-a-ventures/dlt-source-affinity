@@ -13,7 +13,7 @@ from dlt.common.logger import is_logging
 from dlt.common.schema.typing import TTableReferenceParam
 from dlt.common.libs.pydantic import DltConfig
 from pydantic_flatten_rootmodel import flatten_root_model
-from pydantic import TypeAdapter, Field
+from pydantic import TypeAdapter
 from pydantic.fields import FieldInfo
 from .rest_client import (
     get_v1_rest_client,
