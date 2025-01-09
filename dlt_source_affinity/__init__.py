@@ -97,7 +97,7 @@ def __create_id_resource(
         # A downstream resource then picks up the chunks of IDs and can request
         # field data in parallel, as we don't need to follow a pagination
         # cursor
-        selected=False,
+        selected=not is_id_generator,
         write_disposition="replace",
         primary_key="id",
         columns=datacls,
@@ -337,9 +337,7 @@ def __create_entity_resource(entity_name: ENTITY, dev_mode=False) -> DltResource
         entities = datacls.model_validate_json(json_data=response.text)
 
         for e in entities.data:
-            field_gen = process_and_yield_fields(e, name)
-            yield from field_gen
-            (ret, references) = next(field_gen, ({}, None))
+            (ret, references) = yield from process_and_yield_fields(e, name)
             yield dlt.mark.with_hints(
                 item=e.model_dump(exclude={"fields"}) | ret | {"_dlt_id": e.id},
                 hints=dlt.mark.make_hints(
@@ -353,7 +351,17 @@ def __create_entity_resource(entity_name: ENTITY, dev_mode=False) -> DltResource
     return __entities
 
 
-def __create_list_entries_resource(list_ref: ListReference):
+# Via https://stackoverflow.com/questions/34073370
+class Generator:
+    def __init__(self, gen):
+        self.gen = gen
+
+    def __iter__(self):
+        self.value = yield from self.gen
+        return self.value
+
+
+def __create_list_entries_resource(list_ref: ListReference, dev_mode=False):
     name = f"lists-{list_ref}-entries"
     endpoint = generate_list_entries_path(list_ref)
 
@@ -364,6 +372,7 @@ def __create_list_entries_resource(list_ref: ListReference):
         merge_key="id",
         max_table_nesting=3,
         name=name,
+        table_name=name,
     )
     def __list_entries() -> Iterable[TDataItem]:
         rest_client = get_v2_rest_client()
@@ -383,20 +392,32 @@ def __create_list_entries_resource(list_ref: ListReference):
                 hooks=hooks,
             )
         ):
+            field_results = []
+            list_entry_results = []
             for list_entry in list_entries:
                 e = list_entry.root
-                field_gen = process_and_yield_fields(e.entity, name)
-                yield from field_gen
-                (ret, references) = next(field_gen, ({}, None))
-                yield dlt.mark.with_hints(
-                    item=e.model_dump(exclude={"entity"})
+                gen_fields = process_and_yield_fields(e.entity, name)
+                gen = Generator(gen_fields)
+                field_results.extend(gen)
+                (ret, references) = gen.value
+
+                combined_list_entry = (
+                    e.model_dump(exclude={"entity"})
                     | ret
-                    | {"_dlt_id": e.id, "entity_id": e.entity.id},
-                    hints=dlt.mark.make_hints(
-                        table_name=name,
-                        references=references,
-                    ),
+                    | {"_dlt_id": e.id, "entity_id": e.entity.id}
                 )
+                list_entry_results.append(combined_list_entry)
+
+            yield dlt.mark.with_hints(
+                item=list_entry_results,
+                hints=dlt.mark.make_hints(
+                    table_name=name,
+                    references=references,
+                ),
+                # needs to be a variant due to https://github.com/dlt-hub/dlt/pull/2109
+                create_table_variant=True,
+            )
+            yield from field_results
 
     __list_entries.__name__ = name
     __list_entries.__qualname__ = name
@@ -410,7 +431,9 @@ def source(
     """
     list_refs - one or more references to lists and/or saved list views
     """
-    list_resources = [__create_list_entries_resource(ref) for ref in list_refs]
+    list_resources = [
+        __create_list_entries_resource(ref, dev_mode=dev_mode) for ref in list_refs
+    ]
 
     companies = __create_entity_resource("companies", dev_mode=dev_mode)
     """ The companies resource. Contains all company entities. """
