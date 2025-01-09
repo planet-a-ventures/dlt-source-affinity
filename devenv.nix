@@ -18,7 +18,7 @@
   languages.python.uv.sync.enable = true;
   languages.python.uv.sync.allExtras = true;
   languages.python.venv.enable = true;
-  languages.python.version = "3.11";
+  languages.python.version = "3.12";
 
   scripts.generate-model.exec = ''
     ./source/model/generate_model.sh
@@ -34,5 +34,10 @@
     commitizen.enable = true;
     nixfmt-rfc-style.enable = true;
   };
+
+  scripts.format.exec = ''
+    yamlfmt .
+    pre-commit run --all-files
+  '';
 
 }

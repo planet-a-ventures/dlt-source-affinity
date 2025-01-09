@@ -1,0 +1,8 @@
+{
+    "python.testing.pytestArgs": [
+        "dlt_source_affinity"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "debugpy.debugJustMyCode": true,
+}

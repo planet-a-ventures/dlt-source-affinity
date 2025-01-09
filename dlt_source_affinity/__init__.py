@@ -1,14 +1,19 @@
 """A source loading entities and lists from Affinity CRM (affinity.co)"""
 
 from dataclasses import field
-from typing import Any, Dict, Generator, Iterable, List, Sequence
+from enum import StrEnum
+from typing import Any, ClassVar, Dict, Generator, Iterable, List, Optional, Sequence
 import logging
 import dlt
 from dlt.common.typing import TDataItem
 from dlt.sources import DltResource
 from dlt.extract.items import DataItemWithMeta
-from dlt.common.logger import log_level, is_logging, logger
-from pydantic import TypeAdapter
+from dlt.common.logger import is_logging
+from dlt.common.schema.typing import TTableReferenceParam
+from dlt.common.libs.pydantic import DltConfig
+from pydantic_flatten_rootmodel import flatten_root_model
+from pydantic import TypeAdapter, Field
+from pydantic.fields import FieldInfo
 from .rest_client import (
     get_v1_rest_client,
     get_v2_rest_client,
@@ -40,6 +45,18 @@ if is_logging():
     logger.addFilter(HideSpecificWarning())
 
 LISTS_LITERAL = Literal["lists"]
+
+
+class Table(StrEnum):
+    COMPANIES = "companies"
+    PERSONS = "persons"
+    OPPORTUNITIES = "opportunities"
+    NOTES = "notes"
+    LISTS = "lists"
+    INTERACTIONS = "interactions"
+    FIELDS = "fields"
+
+
 ENTITY = Literal["companies", "persons", "opportunities"]
 
 
@@ -102,12 +119,40 @@ def __create_id_resource(
     return __ids
 
 
+ChatMessage.__annotations__["manualCreator"] = int
+ChatMessage.model_fields["manualCreator"] = FieldInfo.from_annotation(int)
+
+Attendee.__annotations__["person"] = Optional[int]
+Attendee.model_fields["person"] = FieldInfo.from_annotation(Optional[int])
+
+FlattenedInteraction = flatten_root_model(Interaction)
+dlt_config: DltConfig = {"skip_nested_types": True}
+setattr(FlattenedInteraction, "dlt_config", dlt_config)
+
+
 @dlt.resource(
     primary_key="id",
     columns=Note,
     max_table_nesting=1,
     write_disposition="replace",
     parallelized=True,
+    references=[
+        {
+            "columns": ["creator_id"],
+            "referenced_columns": ["id"],
+            "referenced_table": Table.PERSONS.value,
+        },
+        {
+            "columns": ["interaction_id", "interaction_type"],
+            "referenced_columns": ["id", "type"],
+            "referenced_table": Table.INTERACTIONS.value,
+        },
+        {
+            "columns": ["parent_id"],
+            "referenced_columns": ["id"],
+            "referenced_table": Table.NOTES.value,
+        },
+    ],
 )
 def notes():
     rest_client = get_v1_rest_client()
@@ -146,25 +191,26 @@ def mark_dropdown_item(
 
 def process_and_yield_fields(
     entity: Company | Person | OpportunityWithFields,
-    ret: Dict[str, Any],
     origin_table: ENTITY | str,
 ) -> Generator[DataItemWithMeta, None, None]:
+    ret: Dict[str, Any] = {}
+    references: TTableReferenceParam = []
     if not entity.fields:
-        return
+        return (ret, references)
     for field in entity.fields:
         yield dlt.mark.with_hints(
             item=field.model_dump(exclude={"value"})
             | {"value_type": field.value.root.type, "_dlt_id": field.id},
             hints=dlt.mark.make_hints(
-                table_name=f"fields",
+                table_name=Table.FIELDS.value,
                 write_disposition="merge",
                 primary_key="id",
                 merge_key="id",
                 references=[
                     {
                         "columns": ["id"],
-                        "referenced_table": origin_table,
                         "referenced_columns": ["id"],
+                        "referenced_table": origin_table,
                     }
                 ],
             ),
@@ -201,12 +247,13 @@ def process_and_yield_fields(
                 interaction = value.data.root
                 ret[new_column] = interaction.model_dump(include={"id", "type"})
                 yield dlt.mark.with_hints(
-                    item=interaction.model_dump() | {"_dlt_id": interaction.id},
+                    item=interaction.model_dump(),
                     hints=dlt.mark.make_hints(
-                        table_name=f"interactions_{interaction.type}",
+                        columns=FlattenedInteraction,
+                        table_name="interactions",
                         write_disposition="merge",
-                        primary_key="id",
-                        merge_key="id",
+                        primary_key=["id", "type"],
+                        merge_key=["id", "type"],
                     ),
                     # needs to be a variant due to https://github.com/dlt-hub/dlt/pull/2109
                     create_table_variant=True,
@@ -227,6 +274,8 @@ def process_and_yield_fields(
                 ret[new_column] = value.data
             case _:
                 raise ValueError(f"Value type {value} not implemented")
+
+    return (ret, references)
 
 
 # TODO: Workaround for the fact that when `add_limit` is used, the yielded entities
@@ -277,11 +326,15 @@ def __create_entity_resource(entity_name: ENTITY) -> DltResource:
         entities = datacls.model_validate_json(json_data=response.text)
 
         for e in entities.data:
-            ret: Dict[str, Any] = {}
-            yield from process_and_yield_fields(e, ret, name)
-            # TODO: dynamically create references
-            yield dlt.mark.with_table_name(
-                e.model_dump(exclude={"fields"}) | ret | {"_dlt_id": e.id}, name
+            field_gen = process_and_yield_fields(e, name)
+            yield from field_gen
+            (ret, references) = next(field_gen, ({}, None))
+            yield dlt.mark.with_hints(
+                item=e.model_dump(exclude={"fields"}) | ret | {"_dlt_id": e.id},
+                hints=dlt.mark.make_hints(
+                    table_name=name,
+                    references=references,
+                ),
             )
 
     __entities.__name__ = name
@@ -334,10 +387,17 @@ def __create_list_entries_resource(list_ref: ListReference):
         ):
             for list_entry in list_entries:
                 e = list_entry.root
-                ret: Dict[str, Any] = {"entity_id": e.entity.id}
-                yield from process_and_yield_fields(e.entity, ret, name)
-                yield dlt.mark.with_table_name(
-                    e.model_dump(exclude={"entity"}) | ret | {"_dlt_id": e.id}, name
+                field_gen = process_and_yield_fields(e.entity, name)
+                yield from field_gen
+                (ret, references) = next(field_gen, ({}, None))
+                yield dlt.mark.with_hints(
+                    item=e.model_dump(exclude={"entity"})
+                    | ret
+                    | {"_dlt_id": e.id, "entity_id": e.entity.id},
+                    hints=dlt.mark.make_hints(
+                        table_name=name,
+                        references=references,
+                    ),
                 )
 
     __list_entries.__name__ = name
