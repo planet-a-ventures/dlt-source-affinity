@@ -83,7 +83,7 @@ def get_entity_data_class_paged(entity: ENTITY):
 
 
 def __create_id_resource(
-    entity: ENTITY | LISTS_LITERAL, is_id_generator: bool = True
+    entity: ENTITY | LISTS_LITERAL, is_id_generator: bool = True, dev_mode=False
 ) -> DltResource:
     name = f"{entity}_ids" if is_id_generator else entity
     datacls = get_entity_data_class(entity)
@@ -101,7 +101,7 @@ def __create_id_resource(
         primary_key="id",
         columns=datacls,
         name=name,
-        parallelized=True,
+        parallelized=not dev_mode,
     )
     def __ids() -> Iterable[TDataItem]:
         rest_client = get_v2_rest_client()
@@ -114,6 +114,8 @@ def __create_id_resource(
             )
         )
 
+    if dev_mode:
+        __ids.add_limit(1)
     __ids.__name__ = name
     __ids.__qualname__ = name
     return __ids
@@ -250,7 +252,7 @@ def process_and_yield_fields(
                     item=interaction.model_dump(),
                     hints=dlt.mark.make_hints(
                         columns=FlattenedInteraction,
-                        table_name="interactions",
+                        table_name=Table.INTERACTIONS.value,
                         write_disposition="merge",
                         primary_key=["id", "type"],
                         merge_key=["id", "type"],
@@ -286,7 +288,7 @@ def __get_id(obj):
     return getattr(obj, "id", None)
 
 
-def __create_entity_resource(entity_name: ENTITY) -> DltResource:
+def __create_entity_resource(entity_name: ENTITY, dev_mode=False) -> DltResource:
     datacls = get_entity_data_class_paged(entity_name)
     name = entity_name
 
@@ -295,7 +297,7 @@ def __create_entity_resource(entity_name: ENTITY) -> DltResource:
         # without any data, so we can parallelize the more expensive data fetching
         # whilst not hitting the API limits so fast and we can parallelize
         # because we don't need to page with cursors
-        data_from=__create_id_resource(entity_name),
+        data_from=__create_id_resource(entity_name, dev_mode=dev_mode),
         write_disposition="replace",
         parallelized=True,
         primary_key="id",
@@ -340,19 +342,6 @@ def __create_entity_resource(entity_name: ENTITY) -> DltResource:
     __entities.__name__ = name
     __entities.__qualname__ = name
     return __entities
-
-
-companies = __create_entity_resource("companies")
-""" The companies resource. Contains all company entities. """
-
-persons = __create_entity_resource("persons")
-""" The persons resource. Contains all person entities. """
-
-opportunities = __create_id_resource("opportunities", False)
-""" The opportunities resource. Contains all opportunity entities. """
-
-lists = __create_id_resource("lists", False)
-""" The lists resource. This contains information about lists themselves, not about their entries """
 
 
 def __create_list_entries_resource(list_ref: ListReference):
@@ -407,12 +396,26 @@ def __create_list_entries_resource(list_ref: ListReference):
 
 @dlt.source(name="affinity")
 def source(
-    list_refs: List[ListReference] = field(default_factory=list),
+    list_refs: List[ListReference] = field(default_factory=list), dev_mode=False
 ) -> Sequence[DltResource]:
     """
     list_refs - one or more references to lists and/or saved list views
     """
     list_resources = [__create_list_entries_resource(ref) for ref in list_refs]
+
+    companies = __create_entity_resource("companies", dev_mode=dev_mode)
+    """ The companies resource. Contains all company entities. """
+
+    persons = __create_entity_resource("persons", dev_mode=dev_mode)
+    """ The persons resource. Contains all person entities. """
+
+    opportunities = __create_id_resource(
+        "opportunities", dev_mode=dev_mode, is_id_generator=False
+    )
+    """ The opportunities resource. Contains all opportunity entities. """
+
+    lists = __create_id_resource("lists", dev_mode=dev_mode, is_id_generator=False)
+    """ The lists resource. This contains information about lists themselves, not about their entries """
 
     return (
         companies,
