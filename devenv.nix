@@ -42,4 +42,16 @@
     pre-commit run --all-files
   '';
 
+  scripts.test-all.exec = ''
+    pytest -s -vv "$@"
+  '';
+
+  enterTest = ''
+    test-all
+  '';
+
+  scripts.build.exec = ''
+    uv build
+  '';
+
 }
