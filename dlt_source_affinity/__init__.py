@@ -83,6 +83,10 @@ def get_entity_data_class_paged(entity: ENTITY):
             return OpportunityPaged
 
 
+def use_id(entity: Company | Person | Opportunity | ListModel):
+    return entity.model_dump() | {"_dlt_id": entity.id}
+
+
 def __create_id_resource(
     entity: ENTITY | LISTS_LITERAL, is_id_generator: bool = True, dev_mode=False
 ) -> DltResource:
@@ -117,6 +121,9 @@ def __create_id_resource(
 
     if dev_mode:
         __ids.add_limit(1)
+    if not is_id_generator:
+        # We have a unique ID, le't tell DLT about it
+        __ids.add_map(use_id)
     __ids.__name__ = name
     __ids.__qualname__ = name
     return __ids
@@ -352,7 +359,7 @@ def __create_entity_resource(entity_name: ENTITY, dev_mode=False) -> DltResource
 
 
 # Via https://stackoverflow.com/questions/34073370
-class Generator:
+class ReturningGenerator:
     def __init__(self, gen):
         self.gen = gen
 
@@ -397,7 +404,7 @@ def __create_list_entries_resource(list_ref: ListReference, dev_mode=False):
             for list_entry in list_entries:
                 e = list_entry.root
                 gen_fields = process_and_yield_fields(e.entity, name)
-                gen = Generator(gen_fields)
+                gen = ReturningGenerator(gen_fields)
                 field_results.extend(gen)
                 (ret, references) = gen.value
 
