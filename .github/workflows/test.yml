@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: release
-      url: https://pypi.org/p/pydantic-flatten-rootmodel
+      url: https://pypi.org/p/dlt-source-affinity
     permissions:
       id-token: write # IMPORTANT: mandatory for trusted publishing  
     steps:
