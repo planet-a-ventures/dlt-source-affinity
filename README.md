@@ -93,6 +93,12 @@ bigquery, or any of the other [destinations](https://dlthub.com/docs/dlt-ecosyst
 
 This project is using [devenv](https://devenv.sh/).
 
+### Run the sample
+
+```sh
+AFFINITY_API_KEY=[...] python affinity_pipeline.py
+```
+
 ### Regenerate V2 model
 
 Run
