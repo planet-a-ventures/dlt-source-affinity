@@ -3,7 +3,7 @@
 from copy import deepcopy
 from dataclasses import field
 from enum import StrEnum
-from typing import Any, ClassVar, Dict, Generator, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Generator, Iterable, List, Optional, Sequence
 import logging
 import dlt
 from dlt.common.typing import TDataItem

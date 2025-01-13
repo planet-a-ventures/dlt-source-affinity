@@ -33,11 +33,25 @@
     check-toml.enable = true;
     commitizen.enable = true;
     nixfmt-rfc-style.enable = true;
+    markdownlint.enable = true;
   };
 
   scripts.format.exec = ''
     yamlfmt .
+    markdownlint --fix .
     pre-commit run --all-files
+  '';
+
+  scripts.test-all.exec = ''
+    pytest -s -vv "$@"
+  '';
+
+  enterTest = ''
+    test-all
+  '';
+
+  scripts.build.exec = ''
+    uv build
   '';
 
 }
