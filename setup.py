@@ -10,7 +10,8 @@ setup(
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     install_requires=[
-        "dlt>=1.4.1",
+        "dlt>=1.5.0",
+        "pydantic-flatten-rootmodel>=0.1.2",
     ],
     classifiers=[
         "Programming Language :: Python :: 3.11",
