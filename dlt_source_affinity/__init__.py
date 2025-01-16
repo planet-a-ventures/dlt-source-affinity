@@ -197,7 +197,7 @@ def mark_dropdown_item(
         item=dropdown_item.model_dump() | {"_dlt_id": dropdown_item.dropdownOptionId},
         hints=dlt.mark.make_hints(
             table_name=get_dropdown_options_table(field),
-            write_disposition="merge",
+            write_disposition="replace",
             primary_key="dropdownOptionId",
             merge_key="dropdownOptionId",
             columns=type(dropdown_item),
@@ -221,7 +221,7 @@ def process_and_yield_fields(
             | {"value_type": field.value.root.type, "_dlt_id": field.id},
             hints=dlt.mark.make_hints(
                 table_name=Table.FIELDS.value,
-                write_disposition="merge",
+                write_disposition="replace",
                 primary_key="id",
                 merge_key="id",
                 references=[
@@ -269,7 +269,7 @@ def process_and_yield_fields(
                     hints=dlt.mark.make_hints(
                         columns=FlattenedInteraction,
                         table_name=Table.INTERACTIONS.value,
-                        write_disposition="merge",
+                        write_disposition="replace",
                         primary_key=["id", "type"],
                         merge_key=["id", "type"],
                     ),
