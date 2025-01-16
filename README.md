@@ -45,7 +45,7 @@ affinity_data = affinity_source(
       ListReference(123),
       # Loads a view with ID 456 in list 123,
       # e.g. https://<your-subdomain>.affinity.co/lists/123/views/456-all-organizations
-      ListReference(247888, 1869904),
+      ListReference(123, 456),
    ]
 )
 pipeline.run(affinity_data)
