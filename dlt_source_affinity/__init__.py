@@ -13,7 +13,7 @@ from dlt.common.logger import is_logging
 from dlt.common.schema.typing import TTableReferenceParam
 from dlt.common.libs.pydantic import DltConfig
 from pydantic_flatten_rootmodel import flatten_root_model
-from pydantic import TypeAdapter
+from pydantic import BaseModel, TypeAdapter
 from pydantic.fields import FieldInfo
 from .rest_client import (
     get_v1_rest_client,
@@ -26,6 +26,14 @@ from .type_adapters import note_adapter, list_adapter
 from .model.v1 import Note, InteractionTypeToLiteral
 from .model.v2 import *
 from .helpers import ListReference, generate_list_entries_path
+
+
+def pydantic_model_dump(model: BaseModel, **kwargs):
+    """
+    Dumps a Pydantic model to a dictionary, using the model's field names as keys AND observing the field aliases,
+    which is important for DLT to correctly map the data to the destination.
+    """
+    return model.model_dump(by_alias=True, **kwargs)
 
 
 if is_logging():
@@ -84,7 +92,7 @@ def get_entity_data_class_paged(entity: ENTITY):
 
 
 def use_id(entity: Company | Person | Opportunity | ListModel):
-    return entity.model_dump() | {"_dlt_id": entity.id}
+    return pydantic_model_dump(entity) | {"_dlt_id": entity.id}
 
 
 def __create_id_resource(
@@ -194,7 +202,8 @@ def mark_dropdown_item(
     dropdown_item: Dropdown | RankedDropdown, field: FieldModel
 ) -> DataItemWithMeta:
     return dlt.mark.with_hints(
-        item=dropdown_item.model_dump() | {"_dlt_id": dropdown_item.dropdownOptionId},
+        item=pydantic_model_dump(dropdown_item)
+        | {"_dlt_id": dropdown_item.dropdownOptionId},
         hints=dlt.mark.make_hints(
             table_name=get_dropdown_options_table(field),
             write_disposition="replace",
@@ -217,7 +226,7 @@ def process_and_yield_fields(
         return (ret, references)
     for field in entity.fields:
         yield dlt.mark.with_hints(
-            item=field.model_dump(exclude={"value"})
+            item=pydantic_model_dump(field, exclude={"value"})
             | {"value_type": field.value.root.type, "_dlt_id": field.id},
             hints=dlt.mark.make_hints(
                 table_name=Table.FIELDS.value,
@@ -263,9 +272,12 @@ def process_and_yield_fields(
                     ret[new_column] = None
                     continue
                 interaction = value.data.root
-                ret[new_column] = interaction.model_dump(include={"id", "type"})
+                ret[new_column] = pydantic_model_dump(
+                    interaction, include={"id", "type"}
+                )
                 yield dlt.mark.with_hints(
-                    item=interaction.model_dump(),
+                    item=pydantic_model_dump(interaction)
+                    | {"_dlt_id": f"{interaction.type}_{interaction.id}"},
                     hints=dlt.mark.make_hints(
                         columns=FlattenedInteraction,
                         table_name=Table.INTERACTIONS.value,
@@ -346,7 +358,9 @@ def __create_entity_resource(entity_name: ENTITY, dev_mode=False) -> DltResource
         for e in entities.data:
             (ret, references) = yield from process_and_yield_fields(e, name)
             yield dlt.mark.with_hints(
-                item=e.model_dump(exclude={"fields"}) | ret | {"_dlt_id": e.id},
+                item=pydantic_model_dump(e, exclude={"fields"})
+                | ret
+                | {"_dlt_id": e.id},
                 hints=dlt.mark.make_hints(
                     table_name=name,
                     references=references,
@@ -409,7 +423,7 @@ def __create_list_entries_resource(list_ref: ListReference, dev_mode=False):
                 (ret, references) = gen.value
 
                 combined_list_entry = (
-                    e.model_dump(exclude={"entity"})
+                    pydantic_model_dump(e, exclude={"entity"})
                     | ret
                     | {"_dlt_id": e.id, "entity_id": e.entity.id}
                 )
