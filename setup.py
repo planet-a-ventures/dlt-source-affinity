@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="dlt-source-affinity",
-    version="0.1.2",
+    version="0.1.3",
     author="Planet A GmbH",
     author_email="dev@planet-a.com",
     packages=find_packages(exclude=["tests"]),
