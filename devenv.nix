@@ -54,4 +54,11 @@
     uv build
   '';
 
+  scripts.sample-pipeline-run.exec = ''
+    python affinity_pipeline.py
+  '';
+
+  scripts.sample-pipeline-show.exec = ''
+    dlt pipeline affinity_pipeline show
+  '';
 }
