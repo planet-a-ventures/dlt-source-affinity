@@ -5,6 +5,8 @@ keywords: [Affinity API, affinity.co, CRM]
 
 # dlt-source-affinity
 
+[![PyPI version](https://badge.fury.io/py/dlt-source-affinity.svg)](https://badge.fury.io/py/dlt-source-affinity)
+
 [DLT](htps://www.github.com/dlt-hub/dlt) source for [Affinity](https://www.affinity.co/).
 
 > If you don't know DLT but stumbled across this when trying to search if you can
