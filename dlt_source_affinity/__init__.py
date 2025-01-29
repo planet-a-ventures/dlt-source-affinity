@@ -376,6 +376,8 @@ def __create_entity_resource(entity_name: ENTITY, dev_mode=False) -> DltResource
                     table_name=name,
                     references=references,
                 ),
+                # needs to be a variant due to https://github.com/dlt-hub/dlt/pull/2109
+                create_table_variant=True,
             )
 
     __entities.__name__ = name
