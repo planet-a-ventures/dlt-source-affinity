@@ -288,6 +288,13 @@ def process_and_yield_fields(
                         write_disposition="replace",
                         primary_key=["id", "type"],
                         merge_key=["id", "type"],
+                        references=[
+                            {
+                                "columns": ["manualCreator"],
+                                "referenced_columns": ["id"],
+                                "referenced_table": Table.PERSONS.value,
+                            }
+                        ],
                     ),
                     # needs to be a variant due to https://github.com/dlt-hub/dlt/pull/2109
                     create_table_variant=True,
