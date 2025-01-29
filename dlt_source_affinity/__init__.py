@@ -216,6 +216,10 @@ def mark_dropdown_item(
     )
 
 
+def is_custom_field(field: FieldModel) -> bool:
+    return field.id.startswith("field-")
+
+
 def process_and_yield_fields(
     entity: Company | Person | OpportunityWithFields,
     origin_table: ENTITY | str,
@@ -244,9 +248,7 @@ def process_and_yield_fields(
             # needs to be a variant due to https://github.com/dlt-hub/dlt/pull/2109
             create_table_variant=True,
         )
-        new_column = (
-            f"{field.id}_{field.name}" if field.id.startswith("field-") else field.id
-        )
+        new_column = f"{field.id}_{field.name}" if is_custom_field(field) else field.id
         value = field.value.root
         match value:
             case DateValue():
