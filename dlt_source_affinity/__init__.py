@@ -3,7 +3,7 @@
 from copy import deepcopy
 from dataclasses import field
 from enum import StrEnum
-from typing import Any, Dict, Generator, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Generator, Iterable, List, Optional, Sequence, Tuple
 import logging
 import dlt
 from dlt.common.typing import TDataItem
@@ -223,7 +223,9 @@ def is_custom_field(field: FieldModel) -> bool:
 def process_and_yield_fields(
     entity: Company | Person | OpportunityWithFields,
     origin_table: ENTITY | str,
-) -> Generator[DataItemWithMeta, None, None]:
+) -> Generator[
+    DataItemWithMeta, DataItemWithMeta, Tuple[Dict[str, Any], TTableReferenceParam]
+]:
     ret: Dict[str, Any] = {}
     references: TTableReferenceParam = []
     if not entity.fields:
@@ -386,6 +388,7 @@ def __create_entity_resource(entity_name: ENTITY, dev_mode=False) -> DltResource
 
 
 # Via https://stackoverflow.com/questions/34073370
+# TODO: Type this properly
 class ReturningGenerator:
     def __init__(self, gen):
         self.gen = gen
@@ -430,14 +433,18 @@ def __create_list_entries_resource(list_ref: ListReference, dev_mode=False):
                 hooks=hooks,
             )
         ):
-            field_results = []
+            field_results: List[DataItemWithMeta] = []
             list_entry_results = []
+            references: TTableReferenceParam = None
             for list_entry in list_entries:
                 e = list_entry.root
                 gen_fields = process_and_yield_fields(e.entity, name)
                 gen = ReturningGenerator(gen_fields)
                 field_results.extend(gen)
-                (ret, references) = gen.value
+                (ret, one_references) = gen.value
+                if references is None and len(one_references) > 0:
+                    # each row should be the same, so only set it once
+                    references = one_references
 
                 combined_list_entry = (
                     pydantic_model_dump(e, exclude={"entity"})
