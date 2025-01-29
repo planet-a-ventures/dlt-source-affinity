@@ -412,6 +412,10 @@ def __create_list_entries_resource(list_ref: ListReference, dev_mode=False):
         rest_client = get_v2_rest_client()
         for list_entries in (
             list_adapter.validate_python(entities)
+            # The list_entries endpoint does not support passing a list of IDs
+            # Thus we need to page as per usual, which is not as efficient as
+            # the Companies and Persons endpoints
+            # TODO: performance: change this when/if the API changes
             for entities in rest_client.paginate(
                 endpoint,
                 params={
