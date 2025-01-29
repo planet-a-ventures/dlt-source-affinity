@@ -3,7 +3,7 @@
 from copy import deepcopy
 from dataclasses import field
 from enum import StrEnum
-from typing import Any, Dict, Generator, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Generator, Iterable, List, Optional, Sequence, Tuple
 import logging
 import dlt
 from dlt.common.typing import TDataItem
@@ -200,13 +200,14 @@ def get_dropdown_options_table(field: FieldModel) -> str:
 
 def mark_dropdown_item(
     dropdown_item: Dropdown | RankedDropdown, field: FieldModel
-) -> DataItemWithMeta:
-    return dlt.mark.with_hints(
+) -> Generator[DataItemWithMeta, None, str]:
+    table_name = get_dropdown_options_table(field)
+    yield dlt.mark.with_hints(
         item=pydantic_model_dump(dropdown_item)
         | {"_dlt_id": dropdown_item.dropdownOptionId},
         hints=dlt.mark.make_hints(
-            table_name=get_dropdown_options_table(field),
-            write_disposition="replace",
+            table_name=table_name,
+            write_disposition="merge",  # we only ever want a unique set of dropdown options
             primary_key="dropdownOptionId",
             merge_key="dropdownOptionId",
             columns=type(dropdown_item),
@@ -214,12 +215,19 @@ def mark_dropdown_item(
         # needs to be a variant due to https://github.com/dlt-hub/dlt/pull/2109
         create_table_variant=True,
     )
+    return table_name
+
+
+def is_custom_field(field: FieldModel) -> bool:
+    return field.id.startswith("field-")
 
 
 def process_and_yield_fields(
     entity: Company | Person | OpportunityWithFields,
     origin_table: ENTITY | str,
-) -> Generator[DataItemWithMeta, None, None]:
+) -> Generator[
+    DataItemWithMeta, DataItemWithMeta, Tuple[Dict[str, Any], TTableReferenceParam]
+]:
     ret: Dict[str, Any] = {}
     references: TTableReferenceParam = []
     if not entity.fields:
@@ -230,7 +238,7 @@ def process_and_yield_fields(
             | {"value_type": field.value.root.type, "_dlt_id": field.id},
             hints=dlt.mark.make_hints(
                 table_name=Table.FIELDS.value,
-                write_disposition="replace",
+                write_disposition="merge",  # we only ever want a unique set of fields
                 primary_key="id",
                 merge_key="id",
                 references=[
@@ -244,26 +252,42 @@ def process_and_yield_fields(
             # needs to be a variant due to https://github.com/dlt-hub/dlt/pull/2109
             create_table_variant=True,
         )
-        new_column = (
-            f"{field.id}_{field.name}" if field.id.startswith("field-") else field.id
-        )
+        new_column = f"{field.id}_{field.name}" if is_custom_field(field) else field.id
         value = field.value.root
         match value:
             case DateValue():
                 ret[new_column] = value.data
             case DropdownValue() | RankedDropdownValue():
-                ret[f"{new_column}_dropdown_option_id"] = (
-                    value.data.dropdownOptionId if value.data is not None else None
-                )
+                new_column = f"{new_column}_dropdown_option_id"
                 if value.data is not None:
-                    yield mark_dropdown_item(value.data, field)
+                    ret[new_column] = value.data.dropdownOptionId
+                    referenced_table = yield from mark_dropdown_item(value.data, field)
+                    references.append(
+                        {
+                            "columns": [new_column],
+                            "referenced_columns": ["dropdownOptionId"],
+                            "referenced_table": referenced_table,
+                        }
+                    )
+                else:
+                    ret[new_column] = None
             case DropdownsValue():
+                new_column = f"{new_column}_dropdown_option_ids"
                 if value.data is None or len(value.data) == 0:
                     ret[new_column] = []
                     continue
-                ret[new_column] = value.data
+                ret[new_column] = [x.dropdownOptionId for x in value.data]
                 for d in value.data:
-                    yield mark_dropdown_item(d, field)
+                    referenced_table = yield from mark_dropdown_item(d, field)
+                    # TODO: this reference is not strictly correct,
+                    # each value in the array should be a reference to the dropdown options table
+                    references.append(
+                        {
+                            "columns": [new_column],
+                            "referenced_columns": ["dropdownOptionId"],
+                            "referenced_table": referenced_table,
+                        }
+                    )
             case FormulaValue():
                 ret[new_column] = value.data.calculatedValue
                 raise ValueError(f"Value type {value} not implemented")
@@ -275,6 +299,14 @@ def process_and_yield_fields(
                 ret[new_column] = pydantic_model_dump(
                     interaction, include={"id", "type"}
                 )
+                references.append(
+                    {
+                        # Improve this once: https://github.com/dlt-hub/dlt/issues/1647 lands
+                        "columns": [f"{new_column}__id", f"{new_column}__type"],
+                        "referenced_columns": ["id", "type"],
+                        "referenced_table": Table.INTERACTIONS.value,
+                    }
+                )
                 yield dlt.mark.with_hints(
                     item=pydantic_model_dump(interaction)
                     | {"_dlt_id": f"{interaction.type}_{interaction.id}"},
@@ -284,14 +316,42 @@ def process_and_yield_fields(
                         write_disposition="replace",
                         primary_key=["id", "type"],
                         merge_key=["id", "type"],
+                        references=[
+                            {
+                                "columns": ["manualCreator"],
+                                "referenced_columns": ["id"],
+                                "referenced_table": Table.PERSONS.value,
+                            }
+                        ],
                     ),
                     # needs to be a variant due to https://github.com/dlt-hub/dlt/pull/2109
                     create_table_variant=True,
                 )
-            case PersonValue() | CompanyValue():
+            case PersonValue():
                 ret[new_column] = value.data
+                if value.data is not None:
+                    references.append(
+                        {
+                            "columns": [new_column],
+                            "referenced_columns": ["id"],
+                            "referenced_table": Table.PERSONS.value,
+                        }
+                    )
+            case CompanyValue():
+                ret[new_column] = value.data
+                if value.data is not None:
+                    references.append(
+                        {
+                            # Improve this once: https://github.com/dlt-hub/dlt/issues/1647 lands
+                            "columns": [new_column],
+                            "referenced_columns": ["id"],
+                            "referenced_table": Table.COMPANIES.value,
+                        }
+                    )
             case PersonsValue() | CompaniesValue():
                 ret[new_column] = value.data if value.data else []
+                # TODO: references once nested hints are supported
+                # https://github.com/dlt-hub/dlt/issues/1647
             case (
                 TextValue()
                 | FloatValue()
@@ -365,6 +425,8 @@ def __create_entity_resource(entity_name: ENTITY, dev_mode=False) -> DltResource
                     table_name=name,
                     references=references,
                 ),
+                # needs to be a variant due to https://github.com/dlt-hub/dlt/pull/2109
+                create_table_variant=True,
             )
 
     __entities.__name__ = name
@@ -373,6 +435,7 @@ def __create_entity_resource(entity_name: ENTITY, dev_mode=False) -> DltResource
 
 
 # Via https://stackoverflow.com/questions/34073370
+# TODO: Type this properly
 class ReturningGenerator:
     def __init__(self, gen):
         self.gen = gen
@@ -399,6 +462,10 @@ def __create_list_entries_resource(list_ref: ListReference, dev_mode=False):
         rest_client = get_v2_rest_client()
         for list_entries in (
             list_adapter.validate_python(entities)
+            # The list_entries endpoint does not support passing a list of IDs
+            # Thus we need to page as per usual, which is not as efficient as
+            # the Companies and Persons endpoints
+            # TODO: performance: change this when/if the API changes
             for entities in rest_client.paginate(
                 endpoint,
                 params={
@@ -413,14 +480,18 @@ def __create_list_entries_resource(list_ref: ListReference, dev_mode=False):
                 hooks=hooks,
             )
         ):
-            field_results = []
+            field_results: List[DataItemWithMeta] = []
             list_entry_results = []
+            references: TTableReferenceParam = None
             for list_entry in list_entries:
                 e = list_entry.root
                 gen_fields = process_and_yield_fields(e.entity, name)
                 gen = ReturningGenerator(gen_fields)
                 field_results.extend(gen)
-                (ret, references) = gen.value
+                (ret, one_references) = gen.value
+                if references is None and len(one_references) > 0:
+                    # each row should be the same, so only set it once
+                    references = one_references
 
                 combined_list_entry = (
                     pydantic_model_dump(e, exclude={"entity"})
