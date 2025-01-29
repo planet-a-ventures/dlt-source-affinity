@@ -279,6 +279,8 @@ def process_and_yield_fields(
                 ret[new_column] = [x.dropdownOptionId for x in value.data]
                 for d in value.data:
                     referenced_table = yield from mark_dropdown_item(d, field)
+                    # TODO: this reference is not strictly correct,
+                    # each value in the array should be a reference to the dropdown options table
                     references.append(
                         {
                             "columns": [new_column],
@@ -341,7 +343,7 @@ def process_and_yield_fields(
                     references.append(
                         {
                             # Improve this once: https://github.com/dlt-hub/dlt/issues/1647 lands
-                            "columns": [f"{new_column}__id"],
+                            "columns": [new_column],
                             "referenced_columns": ["id"],
                             "referenced_table": Table.COMPANIES.value,
                         }
