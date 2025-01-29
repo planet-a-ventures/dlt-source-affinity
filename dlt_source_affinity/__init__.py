@@ -200,12 +200,13 @@ def get_dropdown_options_table(field: FieldModel) -> str:
 
 def mark_dropdown_item(
     dropdown_item: Dropdown | RankedDropdown, field: FieldModel
-) -> DataItemWithMeta:
-    return dlt.mark.with_hints(
+) -> Generator[DataItemWithMeta, None, str]:
+    table_name = get_dropdown_options_table(field)
+    yield dlt.mark.with_hints(
         item=pydantic_model_dump(dropdown_item)
         | {"_dlt_id": dropdown_item.dropdownOptionId},
         hints=dlt.mark.make_hints(
-            table_name=get_dropdown_options_table(field),
+            table_name=table_name,
             write_disposition="merge",  # we only ever want a unique set of dropdown options
             primary_key="dropdownOptionId",
             merge_key="dropdownOptionId",
@@ -214,6 +215,7 @@ def mark_dropdown_item(
         # needs to be a variant due to https://github.com/dlt-hub/dlt/pull/2109
         create_table_variant=True,
     )
+    return table_name
 
 
 def is_custom_field(field: FieldModel) -> bool:
@@ -259,7 +261,14 @@ def process_and_yield_fields(
                 new_column = f"{new_column}_dropdown_option_id"
                 if value.data is not None:
                     ret[new_column] = value.data.dropdownOptionId
-                    yield mark_dropdown_item(value.data, field)
+                    referenced_table = yield from mark_dropdown_item(value.data, field)
+                    references.append(
+                        {
+                            "columns": [new_column],
+                            "referenced_columns": ["dropdownOptionId"],
+                            "referenced_table": referenced_table,
+                        }
+                    )
                 else:
                     ret[new_column] = None
             case DropdownsValue():
@@ -269,7 +278,14 @@ def process_and_yield_fields(
                     continue
                 ret[new_column] = [x.dropdownOptionId for x in value.data]
                 for d in value.data:
-                    yield mark_dropdown_item(d, field)
+                    referenced_table = yield from mark_dropdown_item(d, field)
+                    references.append(
+                        {
+                            "columns": [new_column],
+                            "referenced_columns": ["dropdownOptionId"],
+                            "referenced_table": referenced_table,
+                        }
+                    )
             case FormulaValue():
                 ret[new_column] = value.data.calculatedValue
                 raise ValueError(f"Value type {value} not implemented")
@@ -280,6 +296,14 @@ def process_and_yield_fields(
                 interaction = value.data.root
                 ret[new_column] = pydantic_model_dump(
                     interaction, include={"id", "type"}
+                )
+                references.append(
+                    {
+                        # Improve this once: https://github.com/dlt-hub/dlt/issues/1647 lands
+                        "columns": [f"{new_column}__id", f"{new_column}__type"],
+                        "referenced_columns": ["id", "type"],
+                        "referenced_table": Table.INTERACTIONS.value,
+                    }
                 )
                 yield dlt.mark.with_hints(
                     item=pydantic_model_dump(interaction)
@@ -301,10 +325,31 @@ def process_and_yield_fields(
                     # needs to be a variant due to https://github.com/dlt-hub/dlt/pull/2109
                     create_table_variant=True,
                 )
-            case PersonValue() | CompanyValue():
+            case PersonValue():
                 ret[new_column] = value.data
+                if value.data is not None:
+                    references.append(
+                        {
+                            "columns": [new_column],
+                            "referenced_columns": ["id"],
+                            "referenced_table": Table.PERSONS.value,
+                        }
+                    )
+            case CompanyValue():
+                ret[new_column] = value.data
+                if value.data is not None:
+                    references.append(
+                        {
+                            # Improve this once: https://github.com/dlt-hub/dlt/issues/1647 lands
+                            "columns": [f"{new_column}__id"],
+                            "referenced_columns": ["id"],
+                            "referenced_table": Table.COMPANIES.value,
+                        }
+                    )
             case PersonsValue() | CompaniesValue():
                 ret[new_column] = value.data if value.data else []
+                # TODO: references once nested hints are supported
+                # https://github.com/dlt-hub/dlt/issues/1647
             case (
                 TextValue()
                 | FloatValue()
