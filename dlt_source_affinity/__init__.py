@@ -230,7 +230,7 @@ def process_and_yield_fields(
             | {"value_type": field.value.root.type, "_dlt_id": field.id},
             hints=dlt.mark.make_hints(
                 table_name=Table.FIELDS.value,
-                write_disposition="replace",
+                write_disposition="merge",  # we only ever want a unique set of fields
                 primary_key="id",
                 merge_key="id",
                 references=[
