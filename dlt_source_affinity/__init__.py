@@ -206,7 +206,7 @@ def mark_dropdown_item(
         | {"_dlt_id": dropdown_item.dropdownOptionId},
         hints=dlt.mark.make_hints(
             table_name=get_dropdown_options_table(field),
-            write_disposition="replace",
+            write_disposition="merge",  # we only ever want a unique set of dropdown options
             primary_key="dropdownOptionId",
             merge_key="dropdownOptionId",
             columns=type(dropdown_item),
