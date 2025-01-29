@@ -261,10 +261,11 @@ def process_and_yield_fields(
                 else:
                     ret[new_column] = None
             case DropdownsValue():
+                new_column = f"{new_column}_dropdown_option_ids"
                 if value.data is None or len(value.data) == 0:
                     ret[new_column] = []
                     continue
-                ret[new_column] = value.data
+                ret[new_column] = [x.dropdownOptionId for x in value.data]
                 for d in value.data:
                     yield mark_dropdown_item(d, field)
             case FormulaValue():
