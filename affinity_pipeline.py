@@ -19,6 +19,11 @@ def load_affinity_data() -> None:
         dev_mode=DEV_MODE,
     )
     if DEV_MODE:
+        # ATTENTION: Caveat here for list_refs resources.
+        # Because these endpoints yield single records,
+        # and items with metadata can not be batched into lists, yet (as of dlt 1.5.0) this means
+        # that only resources from the main resource will make it to the destination when this is
+        # enabled. Any derived resources (fields, dropdowns, etc.) will be dropped.
         data.add_limit(1)
     info = pipeline.run(data, refresh="drop_sources")
     print(info)
