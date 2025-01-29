@@ -254,11 +254,12 @@ def process_and_yield_fields(
             case DateValue():
                 ret[new_column] = value.data
             case DropdownValue() | RankedDropdownValue():
-                ret[f"{new_column}_dropdown_option_id"] = (
-                    value.data.dropdownOptionId if value.data is not None else None
-                )
+                new_column = f"{new_column}_dropdown_option_id"
                 if value.data is not None:
+                    ret[new_column] = value.data.dropdownOptionId
                     yield mark_dropdown_item(value.data, field)
+                else:
+                    ret[new_column] = None
             case DropdownsValue():
                 if value.data is None or len(value.data) == 0:
                     ret[new_column] = []
