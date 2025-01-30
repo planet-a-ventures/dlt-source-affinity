@@ -162,7 +162,7 @@ cython_debug/
 #.idea/
 
 # ignore duckdb
-*.duckdb
+*.duckdb*
 
 # Devenv
 .devenv*
