@@ -6,4 +6,4 @@ You can find the latest version of the spec [here](https://developer.affinity.co
 
 1. Download the new spec from the link above.
 2. Put it into this folder.
-3. Run `./generate_model.sh`
+3. Run `generate-model` from project (requires direnv)
