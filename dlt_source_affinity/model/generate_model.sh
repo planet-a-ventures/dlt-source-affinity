@@ -16,9 +16,17 @@ main() {
 
     log "Current Python version: ${python_version}"
 
+    log "Applying OpenAPI spec patch"
+    git apply \
+        --allow-empty \
+        ./v2_spec_patches.diff
+    log "Applied spec patch"
+
+    log "Generating code from OpenAPI spec"
+    # we need to ignore extra fields because DLT adds extra fields to models like _dlt_id, etc.
     datamodel-codegen \
         --input v2_spec.json \
-        --output v2.py \
+        --output . \
         --output-model-type pydantic_v2.BaseModel \
         --use-annotated \
         --use-union-operator \
@@ -27,17 +35,22 @@ main() {
         --input-file-type openapi \
         --field-constraints \
         --use-double-quotes \
-        --base-class ..MyBaseModel \
+        --base-class .my_base_model.MyBaseModel \
         --disable-timestamp \
-        --target-python-version "${python_version}"
-
+        --target-python-version "${python_version}" \
+        --extra-fields "ignore"
     log "Generated code"
+    
+    log "Reverting OpenAPI spec patch"
+    git checkout \
+        ./v2_spec.json
+    log "Reverted spec patch"
 
+    log "Applying model patch"
     git apply \
         --allow-empty \
         ./v2_model_patches.diff
-
-    log "Applied patch"
+    log "Applied model patch"
 
     popd >/dev/null
 }

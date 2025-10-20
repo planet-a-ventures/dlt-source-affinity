@@ -3,16 +3,47 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from enum import Enum
 from typing import Annotated, List, Literal
+from uuid import UUID
 
-from pydantic import AnyUrl, Field, RootModel, constr
+from pydantic import AnyUrl, AwareDatetime, ConfigDict, Field, RootModel
 
-from . import MyBaseModel
+from .my_base_model import MyBaseModel
+
+
+class AuthenticationError(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    code: Literal["authentication"]
+    """
+    Error code
+    """
+    message: str
+    """
+    Error message
+    """
+
+
+class AuthorizationError(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    code: Literal["authorization"]
+    """
+    Error code
+    """
+    message: str
+    """
+    Error message
+    """
 
 
 class BadRequestError(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     code: Literal["bad-request"]
     """
     Error code
@@ -24,6 +55,9 @@ class BadRequestError(MyBaseModel):
 
 
 class ConflictError(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     code: Literal["conflict"]
     """
     Error code
@@ -35,6 +69,9 @@ class ConflictError(MyBaseModel):
 
 
 class MethodNotAllowedError(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     code: Literal["method-not-allowed"]
     """
     Error code
@@ -46,6 +83,9 @@ class MethodNotAllowedError(MyBaseModel):
 
 
 class NotAcceptableError(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     code: Literal["not-acceptable"]
     """
     Error code
@@ -56,7 +96,24 @@ class NotAcceptableError(MyBaseModel):
     """
 
 
+class NotFoundError(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    code: Literal["not-found"]
+    """
+    Error code
+    """
+    message: str
+    """
+    Error message
+    """
+
+
 class NotImplementedError(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     code: Literal["not-implemented"]
     """
     Error code
@@ -68,6 +125,9 @@ class NotImplementedError(MyBaseModel):
 
 
 class RateLimitError(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     code: Literal["rate-limit"]
     """
     Error code
@@ -79,6 +139,9 @@ class RateLimitError(MyBaseModel):
 
 
 class ServerError(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     code: Literal["server"]
     """
     Error code
@@ -90,6 +153,9 @@ class ServerError(MyBaseModel):
 
 
 class UnprocessableEntityError(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     code: Literal["unprocessable-entity"]
     """
     Error code
@@ -101,6 +167,9 @@ class UnprocessableEntityError(MyBaseModel):
 
 
 class UnsupportedMediaTypeError(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     code: Literal["unsupported-media-type"]
     """
     Error code
@@ -111,7 +180,73 @@ class UnsupportedMediaTypeError(MyBaseModel):
     """
 
 
+class ValidationError(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    code: Literal["validation"]
+    """
+    Error code
+    """
+    message: str
+    """
+    Error message
+    """
+    param: str
+    """
+    Param the error refers to
+    """
+
+
+class Error(
+    RootModel[
+        AuthenticationError
+        | AuthorizationError
+        | BadRequestError
+        | ConflictError
+        | MethodNotAllowedError
+        | NotAcceptableError
+        | NotFoundError
+        | NotImplementedError
+        | RateLimitError
+        | ServerError
+        | UnprocessableEntityError
+        | UnsupportedMediaTypeError
+        | ValidationError
+    ]
+):
+    root: Annotated[
+        AuthenticationError
+        | AuthorizationError
+        | BadRequestError
+        | ConflictError
+        | MethodNotAllowedError
+        | NotAcceptableError
+        | NotFoundError
+        | NotImplementedError
+        | RateLimitError
+        | ServerError
+        | UnprocessableEntityError
+        | UnsupportedMediaTypeError
+        | ValidationError,
+        Field(discriminator="code", title="Error"),
+    ]
+
+
+class Errors(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    errors: List[Error]
+    """
+    Errors
+    """
+
+
 class Tenant(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
     """
     The tenant's unique identifier
@@ -120,18 +255,16 @@ class Tenant(MyBaseModel):
     """
     The name of the tenant
     """
-    subdomain: Annotated[
-        constr(
-            pattern=r"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]{0,61}[A-Za-z0-9])$"
-        ),
-        Field(examples=["contoso"]),
-    ]
+    subdomain: Annotated[str, Field(examples=["contoso"])]
     """
     The tenant's subdomain under affinity.co
     """
 
 
 class User(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
     """
     The user's unique identifier
@@ -150,8 +283,16 @@ class User(MyBaseModel):
     """
 
 
+class Type(Enum):
+    API_KEY = "api-key"
+    ACCESS_TOKEN = "access-token"
+
+
 class Grant(MyBaseModel):
-    type: Annotated[Literal["api-key"], Field(examples=["api-key"])]
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Annotated[Type, Field(examples=["api-key"])]
     """
     The type of grant used to authenticate
     """
@@ -159,173 +300,41 @@ class Grant(MyBaseModel):
     """
     The scopes available to the current grant
     """
-    createdAt: Annotated[datetime, Field(examples=["2023-01-01T00:00:00Z"])]
+    createdAt: Annotated[AwareDatetime, Field(examples=["2023-01-01T00:00:00Z"])]
     """
     When the grant was created
     """
 
 
 class WhoAmI(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     tenant: Tenant
     user: User
     grant: Grant
 
 
-class AuthenticationError(MyBaseModel):
-    code: Literal["authentication"]
-    """
-    Error code
-    """
-    message: str
-    """
-    Error message
-    """
-
-
-class AuthenticationErrors(MyBaseModel):
-    errors: List[AuthenticationError]
-    """
-    AuthenticationError errors
-    """
-
-
-class NotFoundError(MyBaseModel):
-    code: Literal["not-found"]
-    """
-    Error code
-    """
-    message: str
-    """
-    Error message
-    """
-
-
 class NotFoundErrors(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     errors: List[NotFoundError]
     """
     NotFoundError errors
     """
 
 
-class CompanyData(MyBaseModel):
-    id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
-    """
-    The company's unique identifier
-    """
-    name: Annotated[str, Field(examples=["Acme"])]
-    """
-    The company's name
-    """
-    domain: Annotated[str | None, Field(examples=["acme.co"])] = None
-    """
-    The company's primary domain
-    """
-
-
-class CompaniesValue(MyBaseModel):
-    type: Literal["company-multi"]
-    """
-    The type of value
-    """
-    data: List[CompanyData] | None
-    """
-    The values for many companies
-    """
-
-
-class CompanyValue(MyBaseModel):
-    type: Literal["company"]
-    """
-    The type of value
-    """
-    data: CompanyData | None = None
-
-
-class DateValue(MyBaseModel):
-    type: Literal["datetime"]
-    """
-    The type of value
-    """
-    data: datetime | None = None
-    """
-    The value for a date
-    """
-
-
-class Dropdown(MyBaseModel):
-    dropdownOptionId: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
-    """
-    Dropdown item's unique identifier
-    """
-    text: Annotated[str, Field(examples=["first"])]
-    """
-    Dropdown item text
-    """
-
-
-class DropdownValue(MyBaseModel):
-    type: Literal["dropdown"]
-    """
-    The type of value
-    """
-    data: Dropdown | None = None
-
-
-class DropdownsValue(MyBaseModel):
-    type: Literal["dropdown-multi"]
-    """
-    The type of value
-    """
-    data: List[Dropdown] | None
-    """
-    The value for many dropdown items
-    """
-
-
-class FloatValue(MyBaseModel):
-    type: Literal["number"]
-    """
-    The type of value
-    """
-    data: float | None = None
-    """
-    The value for a number
-    """
-
-
-class FloatsValue(MyBaseModel):
-    type: Literal["number-multi"]
-    """
-    The type of value
-    """
-    data: List[float] | None
-    """
-    The value for many numbers
-    """
-
-
-class FormulaNumber(MyBaseModel):
-    calculatedValue: float | None = None
-    """
-    Calculated value
-    """
-
-
-class FormulaValue(MyBaseModel):
-    type: Literal["formula-number"]
-    """
-    The type of value
-    """
-    data: FormulaNumber | None = None
-
-
-class Type(Enum):
+class Type1(Enum):
     INTERNAL = "internal"
     EXTERNAL = "external"
     COLLABORATOR = "collaborator"
 
 
 class PersonData(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
     """
     The persons's unique identifier
@@ -344,10 +353,276 @@ class PersonData(MyBaseModel):
     """
     The person's primary email address
     """
-    type: Annotated[Type, Field(examples=["internal"])]
+    type: Annotated[Type1, Field(examples=["internal"])]
     """
     The person's type
     """
+
+
+class Attendee(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    emailAddress: Annotated[str | None, Field(examples=["john.smith@contoso.com"])] = (
+        None
+    )
+    """
+    The email addresses of the attendee
+    """
+    person: PersonData | None = None
+
+
+class AttendeesPreview(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[Attendee], Field(max_length=100)]
+    """
+    A preview of Attendees
+    """
+    totalCount: Annotated[int, Field(examples=[200], ge=0, le=9007199254740991)]
+    """
+    The total count of Attendees
+    """
+
+
+class Pagination(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    prevUrl: Annotated[
+        AnyUrl | None,
+        Field(
+            examples=["https://api.affinity.co/v2/foo?cursor=ICAgICAgYmVmb3JlOjo6Nw"]
+        ),
+    ] = None
+    """
+    URL for the previous page
+    """
+    nextUrl: Annotated[
+        AnyUrl | None,
+        Field(
+            examples=["https://api.affinity.co/v2/foo?cursor=ICAgICAgIGFmdGVyOjo6NA"]
+        ),
+    ] = None
+    """
+    URL for the next page
+    """
+
+
+class PaginationWithTotalCount(Pagination):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    totalCount: Annotated[int | None, Field(ge=0, le=9007199254740991)] = None
+    """
+    The total count of the collection. Only included if requested via the totalCount query string parameter.
+    """
+
+
+class PersonDataPreview(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[PersonData], Field(max_length=100)]
+    """
+    A preview of persons
+    """
+    totalCount: Annotated[int, Field(examples=[200], ge=0, le=9007199254740991)]
+    """
+    The total count of persons
+    """
+
+
+class CompanyData(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
+    """
+    The company's unique identifier
+    """
+    name: Annotated[str, Field(examples=["Acme"])]
+    """
+    The company's name
+    """
+    domain: Annotated[str | None, Field(examples=["acme.co"])] = None
+    """
+    The company's primary domain
+    """
+
+
+class CompanyValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["company"]
+    """
+    The type of value
+    """
+    data: CompanyData | None = None
+
+
+class CompaniesValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["company-multi"]
+    """
+    The type of value
+    """
+    data: Annotated[List[CompanyData] | None, Field(max_length=100)]
+    """
+    The values for many companies
+    """
+
+
+class DateValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["datetime"]
+    """
+    The type of value
+    """
+    data: AwareDatetime | None = None
+    """
+    The value for a date
+    """
+
+
+class Dropdown(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    dropdownOptionId: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
+    """
+    Dropdown item's unique identifier
+    """
+    text: Annotated[str, Field(examples=["first"])]
+    """
+    Dropdown item text
+    """
+
+
+class DropdownValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["dropdown"]
+    """
+    The type of value
+    """
+    data: Dropdown | None = None
+
+
+class DropdownsValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["dropdown-multi"]
+    """
+    The type of value
+    """
+    data: List[Dropdown] | None
+    """
+    The value for many dropdown items
+    """
+
+
+class FloatValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["number"]
+    """
+    The type of value
+    """
+    data: float | None = None
+    """
+    The value for a number
+    """
+
+
+class FloatsValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["number-multi"]
+    """
+    The type of value
+    """
+    data: List[float] | None
+    """
+    The value for many numbers
+    """
+
+
+class Type2(Enum):
+    FILTERABLE_TEXT = "filterable-text"
+    TEXT = "text"
+
+
+class TextValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Annotated[
+        Literal["filterable-text", "text"], Field(examples=["filterable-text"])
+    ]
+    """
+    The type of value
+    """
+    data: str | None = None
+    """
+    The value for a string
+    """
+
+
+class LinkedInEntry(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    link: str | None = None
+    """
+    The link to the LinkedIn entry
+    """
+    text: str | None = None
+
+
+class TextsValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["filterable-text-multi"]
+    """
+    The type of value
+    """
+    data: List[LinkedInEntry] | List[str] | None = None
+    """
+    The value for many strings
+    """
+
+
+class FormulaNumber(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    calculatedValue: float | None = None
+    """
+    Calculated value
+    """
+
+
+class FormulaValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["formula-number"]
+    """
+    The type of value
+    """
+    data: FormulaNumber | None = None
 
 
 class Direction(Enum):
@@ -356,6 +631,9 @@ class Direction(Enum):
 
 
 class ChatMessage(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     type: Annotated[Literal["chat-message"], Field(examples=["chat-message"])]
     """
     The type of interaction
@@ -364,11 +642,11 @@ class ChatMessage(MyBaseModel):
     """
     The chat message's unique identifier
     """
-    direction: Annotated[Direction, Field(examples=["outbound"])]
+    direction: Annotated[Direction, Field(examples=["sent"])]
     """
     The direction of the chat message
     """
-    sentAt: Annotated[datetime, Field(examples=["2023-01-01T00:00:00Z"])]
+    sentAt: Annotated[AwareDatetime, Field(examples=["2023-01-01T00:00:00Z"])]
     """
     The time the chat message was sent
     """
@@ -379,17 +657,10 @@ class ChatMessage(MyBaseModel):
     """
 
 
-class Attendee(MyBaseModel):
-    emailAddress: Annotated[str | None, Field(examples=["john.smith@contoso.com"])] = (
-        None
-    )
-    """
-    The email addresses of the attendee
-    """
-    person: PersonData | None = None
-
-
 class Email(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     type: Annotated[Literal["email"], Field(examples=["email"])]
     """
     The type of interaction
@@ -402,7 +673,7 @@ class Email(MyBaseModel):
     """
     The subject of the email
     """
-    sentAt: Annotated[datetime, Field(examples=["2023-01-01T00:00:00Z"])]
+    sentAt: Annotated[AwareDatetime, Field(examples=["2023-01-01T00:00:00Z"])]
     """
     The time the email was sent
     """
@@ -418,6 +689,9 @@ class Email(MyBaseModel):
 
 
 class Meeting(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     type: Annotated[Literal["meeting"], Field(examples=["meeting"])]
     """
     The type of interaction
@@ -434,11 +708,13 @@ class Meeting(MyBaseModel):
     """
     Whether the meeting is an all-day event
     """
-    startTime: Annotated[datetime, Field(examples=["2023-02-03T04:00:00Z"])]
+    startTime: Annotated[AwareDatetime, Field(examples=["2023-02-03T04:00:00Z"])]
     """
     The meeting start time
     """
-    endTime: Annotated[datetime | None, Field(examples=["2023-02-03T05:00:00Z"])] = None
+    endTime: Annotated[
+        AwareDatetime | None, Field(examples=["2023-02-03T05:00:00Z"])
+    ] = None
     """
     The meeting end time
     """
@@ -449,6 +725,9 @@ class Meeting(MyBaseModel):
 
 
 class PhoneCall(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     type: Annotated[Literal["call"], Field(examples=["call"])]
     """
     The type of interaction
@@ -457,7 +736,7 @@ class PhoneCall(MyBaseModel):
     """
     The phon_call's unique identifier
     """
-    startTime: Annotated[datetime, Field(examples=["2023-02-03T04:00:00Z"])]
+    startTime: Annotated[AwareDatetime, Field(examples=["2023-02-03T04:00:00Z"])]
     """
     The call start time
     """
@@ -469,11 +748,15 @@ class PhoneCall(MyBaseModel):
 
 class Interaction(RootModel[ChatMessage | Email | Meeting | PhoneCall]):
     root: Annotated[
-        ChatMessage | Email | Meeting | PhoneCall, Field(discriminator="type")
+        ChatMessage | Email | Meeting | PhoneCall,
+        Field(discriminator="type", title="Interaction"),
     ]
 
 
 class InteractionValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     type: Literal["interaction"]
     """
     The type of value
@@ -482,7 +765,10 @@ class InteractionValue(MyBaseModel):
 
 
 class Location(MyBaseModel):
-    streetAddress: Annotated[str | None, Field(examples=["170 Columbus Ave"])] = None
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    streetAddress: Annotated[str | None, Field(examples=["1 Main Street"])] = None
     """
     Street address
     """
@@ -505,6 +791,9 @@ class Location(MyBaseModel):
 
 
 class LocationValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     type: Literal["location"]
     """
     The type of value
@@ -513,6 +802,9 @@ class LocationValue(MyBaseModel):
 
 
 class LocationsValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     type: Literal["location-multi"]
     """
     The type of value
@@ -524,6 +816,9 @@ class LocationsValue(MyBaseModel):
 
 
 class PersonValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     type: Literal["person"]
     """
     The type of value
@@ -532,17 +827,23 @@ class PersonValue(MyBaseModel):
 
 
 class PersonsValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     type: Literal["person-multi"]
     """
     The type of value
     """
-    data: List[PersonData] | None
+    data: Annotated[List[PersonData] | None, Field(max_length=100)]
     """
     The values for many persons
     """
 
 
 class RankedDropdown(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     dropdownOptionId: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
     """
     Dropdown item's unique identifier
@@ -562,6 +863,9 @@ class RankedDropdown(MyBaseModel):
 
 
 class RankedDropdownValue(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     type: Literal["ranked-dropdown"]
     """
     The type of value
@@ -569,77 +873,43 @@ class RankedDropdownValue(MyBaseModel):
     data: RankedDropdown | None = None
 
 
-class Type1(Enum):
-    FILTERABLE_TEXT = "filterable-text"
-    TEXT = "text"
-
-
-class TextValue(MyBaseModel):
-    type: Annotated[
-        Literal["filterable-text", "text"], Field(examples=["filterable-text"])
-    ]
-    """
-    The type of value
-    """
-    data: str | None = None
-    """
-    The value for a string
-    """
-
-
-class LinkedInEntry(MyBaseModel):
-    link: str | None = None
-    text: str | None = None
-
-
-class TextsValue(MyBaseModel):
-    type: Literal["filterable-text-multi"]
-    """
-    The type of value
-    """
-    data: List[LinkedInEntry] | List[str] | None = None
-    """
-    The value for many strings
-    """
-
-
 class FieldValue(
     RootModel[
         CompaniesValue
         | CompanyValue
         | DateValue
-        | DropdownValue
         | DropdownsValue
-        | FloatValue
+        | DropdownValue
         | FloatsValue
+        | FloatValue
         | FormulaValue
         | InteractionValue
-        | LocationValue
         | LocationsValue
-        | PersonValue
+        | LocationValue
         | PersonsValue
+        | PersonValue
         | RankedDropdownValue
-        | TextValue
         | TextsValue
+        | TextValue
     ]
 ):
     root: Annotated[
         CompaniesValue
         | CompanyValue
         | DateValue
-        | DropdownValue
         | DropdownsValue
-        | FloatValue
+        | DropdownValue
         | FloatsValue
+        | FloatValue
         | FormulaValue
         | InteractionValue
-        | LocationValue
         | LocationsValue
-        | PersonValue
+        | LocationValue
         | PersonsValue
+        | PersonValue
         | RankedDropdownValue
-        | TextValue
-        | TextsValue,
+        | TextsValue
+        | TextValue,
         Field(
             discriminator="type",
             examples=[
@@ -647,18 +917,19 @@ class FieldValue(
                     "data": {
                         "continent": "North America",
                         "country": "United States",
-                        "streetAddress": "170 Columbus Ave",
+                        "streetAddress": "1 Main Street",
                         "city": "San Francisco",
                         "state": "California",
                     },
                     "type": "location",
                 }
             ],
+            title="FieldValue",
         ),
     ]
 
 
-class Type2(Enum):
+class Type3(Enum):
     ENRICHED = "enriched"
     GLOBAL_ = "global"
     LIST = "list"
@@ -672,7 +943,10 @@ class EnrichmentSource(Enum):
 
 
 class FieldModel(MyBaseModel):
-    id: Annotated[str, Field(examples=["affinity-data-location"])]
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    id: Annotated[str, Field(examples=["affinity-data-location", "field-1234"])]
     """
     The field's unique identifier
     """
@@ -680,7 +954,7 @@ class FieldModel(MyBaseModel):
     """
     The field's name
     """
-    type: Annotated[Type2, Field(examples=["enriched"])]
+    type: Annotated[Type3, Field(examples=["enriched"])]
     """
     The field's type
     """
@@ -694,6 +968,9 @@ class FieldModel(MyBaseModel):
 
 
 class Company(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
     """
     The company's unique identifier
@@ -712,7 +989,7 @@ class Company(MyBaseModel):
     """
     isGlobal: Annotated[bool, Field(examples=[True])]
     """
-    Whether or not the company is org specific
+    Whether or not the company is tenant specific
     """
     fields: List[FieldModel] | None = None
     """
@@ -720,69 +997,21 @@ class Company(MyBaseModel):
     """
 
 
-class Pagination(MyBaseModel):
-    prevUrl: Annotated[
-        AnyUrl | None,
-        Field(
-            examples=["https://api.affinity.co/v2/foo?cursor=ICAgICAgYmVmb3JlOjo6Nw"]
-        ),
-    ] = None
-    """
-    URL for the previous page
-    """
-    nextUrl: Annotated[
-        AnyUrl | None,
-        Field(
-            examples=["https://api.affinity.co/v2/foo?cursor=ICAgICAgIGFmdGVyOjo6NA"]
-        ),
-    ] = None
-    """
-    URL for the next page
-    """
-
-
 class CompanyPaged(MyBaseModel):
-    data: List[Company]
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[Company], Field(max_length=100)]
     """
     A page of Company results
     """
     pagination: Pagination
 
 
-class ValidationError(MyBaseModel):
-    code: Literal["validation"]
-    """
-    Error code
-    """
-    message: str
-    """
-    Error message
-    """
-    param: str
-    """
-    Param the error refers to
-    """
-
-
-class ValidationErrors(MyBaseModel):
-    errors: List[ValidationError]
-    """
-    ValidationError errors
-    """
-
-
-class AuthorizationError(MyBaseModel):
-    code: Literal["authorization"]
-    """
-    Error code
-    """
-    message: str
-    """
-    Error message
-    """
-
-
 class AuthorizationErrors(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     errors: List[AuthorizationError]
     """
     AuthorizationError errors
@@ -810,7 +1039,10 @@ class ValueType(Enum):
 
 
 class FieldMetadata(MyBaseModel):
-    id: Annotated[str, Field(examples=["affinity-data-location"])]
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    id: Annotated[str, Field(examples=["affinity-data-location", "field-1234"])]
     """
     The field's unique identifier
     """
@@ -818,7 +1050,7 @@ class FieldMetadata(MyBaseModel):
     """
     The field's name
     """
-    type: Annotated[Type2, Field(examples=["enriched"])]
+    type: Annotated[Type3, Field(examples=["enriched"])]
     """
     The field's type
     """
@@ -835,7 +1067,10 @@ class FieldMetadata(MyBaseModel):
 
 
 class FieldMetadataPaged(MyBaseModel):
-    data: List[FieldMetadata]
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[FieldMetadata], Field(max_length=100)]
     """
     A page of FieldMetadata results
     """
@@ -843,6 +1078,9 @@ class FieldMetadataPaged(MyBaseModel):
 
 
 class ListModel(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
     """
     The unique identifier for the list
@@ -866,7 +1104,10 @@ class ListModel(MyBaseModel):
 
 
 class ListPaged(MyBaseModel):
-    data: List[ListModel]
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[ListModel], Field(max_length=100)]
     """
     A page of List results
     """
@@ -874,6 +1115,9 @@ class ListPaged(MyBaseModel):
 
 
 class ListEntry(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
     """
     The list entry's unique identifier
@@ -882,7 +1126,7 @@ class ListEntry(MyBaseModel):
     """
     The ID of the list that this list entry belongs to
     """
-    createdAt: Annotated[datetime, Field(examples=["2023-01-01T00:00:00Z"])]
+    createdAt: Annotated[AwareDatetime, Field(examples=["2023-01-01T00:00:00Z"])]
     """
     The date that the list entry was created
     """
@@ -899,20 +1143,138 @@ class ListEntry(MyBaseModel):
 
 
 class ListEntryPaged(MyBaseModel):
-    data: List[ListEntry]
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[ListEntry], Field(max_length=100)]
     """
     A page of ListEntry results
     """
     pagination: Pagination
 
 
-class Type4(Enum):
+class Opportunity(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
+    """
+    The unique identifier for the opportunity
+    """
+    name: Annotated[str, Field(examples=["Acme Upsell $10k"])]
+    """
+    The name of the opportunity
+    """
+    listId: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
+    """
+    The ID of the list that the opportunity belongs to
+    """
+
+
+class Status(Enum):
+    IN_PROGRESS = "in-progress"
+    SUCCESS = "success"
+    FAILED = "failed"
+
+
+class CompanyMergeState(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    id: Annotated[int, Field(examples=[12345], ge=1, le=9007199254740991)]
+    """
+    The unique identifier for the merge
+    """
+    status: Annotated[Status, Field(examples=["success"])]
+    """
+    Current status of the merge
+    """
+    taskId: Annotated[UUID, Field(examples=["789e0123-e45b-67c8-d901-234567890123"])]
+    """
+    Identifier for the task this merge belongs to
+    """
+    startedAt: Annotated[AwareDatetime, Field(examples=["2025-06-03T10:30:00Z"])]
+    """
+    Timestamp when the merge started
+    """
+    primaryCompanyId: Annotated[int, Field(examples=[12345], ge=1, le=9007199254740991)]
+    """
+    ID of the primary company that other profiles were merged into
+    """
+    duplicateCompanyId: Annotated[
+        int, Field(examples=[67890], ge=1, le=9007199254740991)
+    ]
+    """
+    ID of the duplicate company that was merged into the primary company
+    """
+    completedAt: Annotated[
+        AwareDatetime | None, Field(examples=["2025-06-03T10:32:15Z", None])
+    ] = None
+    """
+    Timestamp when the merge completed (success or failure)
+    """
+    errorMessage: Annotated[
+        str | None, Field(examples=["Primary company not found", None])
+    ] = None
+    """
+    Error message if the merge failed
+    """
+
+
+class CompanyMergeStatePaged(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[CompanyMergeState], Field(max_length=100)]
+    """
+    Array of company merge states
+    """
+    pagination: Pagination
+
+
+class CompanyMergeRequest(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    primaryCompanyId: Annotated[int, Field(examples=[12345], ge=1, le=9007199254740991)]
+    """
+    The ID of the company profile that will be kept after the merge. All data from the duplicate company will be merged into this company.
+    """
+    duplicateCompanyId: Annotated[
+        int, Field(examples=[67890], ge=1, le=9007199254740991)
+    ]
+    """
+    The ID of the company profile that will be merged and then deleted. All data from this company will be transferred to the primary company.
+    """
+
+
+class CompanyMergeResponse(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    taskUrl: Annotated[
+        AnyUrl,
+        Field(
+            examples=[
+                "https://api.affinit.com/tasks/company-merges/123e4567-e89b-12d3-a456-426614174000"
+            ]
+        ),
+    ]
+    """
+    URL to check the status of the merge task
+    """
+
+
+class Type5(Enum):
     COMPANY = "company"
     OPPORTUNITY = "opportunity"
     PERSON = "person"
 
 
 class ListWithType(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
     """
     The unique identifier for the list
@@ -933,14 +1295,17 @@ class ListWithType(MyBaseModel):
     """
     Whether or not the list is public
     """
-    type: Annotated[Type4, Field(examples=["company"])]
+    type: Annotated[Type5, Field(examples=["company"])]
     """
     The entity type for this list
     """
 
 
 class ListWithTypePaged(MyBaseModel):
-    data: List[ListWithType]
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[ListWithType], Field(max_length=100)]
     """
     A page of ListWithType results
     """
@@ -948,6 +1313,9 @@ class ListWithTypePaged(MyBaseModel):
 
 
 class CompanyListEntry(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
     """
     The list entry's unique identifier
@@ -956,7 +1324,11 @@ class CompanyListEntry(MyBaseModel):
     """
     The entity type for this list entry
     """
-    createdAt: Annotated[datetime, Field(examples=["2023-01-01T00:00:00Z"])]
+    listId: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
+    """
+    The ID of the list that this list entry belongs to
+    """
+    createdAt: Annotated[AwareDatetime, Field(examples=["2023-01-01T00:00:00Z"])]
     """
     The date that the list entry was created
     """
@@ -970,6 +1342,9 @@ class CompanyListEntry(MyBaseModel):
 
 
 class OpportunityWithFields(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
     """
     The unique identifier for the opportunity
@@ -989,6 +1364,9 @@ class OpportunityWithFields(MyBaseModel):
 
 
 class OpportunityListEntry(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
     """
     The list entry's unique identifier
@@ -997,7 +1375,11 @@ class OpportunityListEntry(MyBaseModel):
     """
     The entity type for this list entry
     """
-    createdAt: Annotated[datetime, Field(examples=["2023-01-01T00:00:00Z"])]
+    listId: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
+    """
+    The ID of the list that this list entry belongs to
+    """
+    createdAt: Annotated[AwareDatetime, Field(examples=["2023-01-01T00:00:00Z"])]
     """
     The date that the list entry was created
     """
@@ -1010,12 +1392,15 @@ class OpportunityListEntry(MyBaseModel):
     entity: OpportunityWithFields
 
 
-class Type5(Enum):
+class Type6(Enum):
     INTERNAL = "internal"
     EXTERNAL = "external"
 
 
 class Person(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
     """
     The persons's unique identifier
@@ -1040,7 +1425,7 @@ class Person(MyBaseModel):
     """
     All of the person's email addresses
     """
-    type: Annotated[Type5, Field(examples=["internal"])]
+    type: Annotated[Type6, Field(examples=["internal"])]
     """
     The person's type
     """
@@ -1051,6 +1436,9 @@ class Person(MyBaseModel):
 
 
 class PersonListEntry(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
     """
     The list entry's unique identifier
@@ -1059,7 +1447,11 @@ class PersonListEntry(MyBaseModel):
     """
     The entity type for this list entry
     """
-    createdAt: Annotated[datetime, Field(examples=["2023-01-01T00:00:00Z"])]
+    listId: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
+    """
+    The ID of the list that this list entry belongs to
+    """
+    createdAt: Annotated[AwareDatetime, Field(examples=["2023-01-01T00:00:00Z"])]
     """
     The date that the list entry was created
     """
@@ -1077,76 +1469,264 @@ class ListEntryWithEntity(
 ):
     root: Annotated[
         CompanyListEntry | OpportunityListEntry | PersonListEntry,
-        Field(
-            discriminator="type",
-            examples=[
-                {
-                    "createdAt": "2023-01-01 00:00:00.000000000 Z",
-                    "creatorId": 1,
-                    "id": 1,
-                    "type": "company",
-                    "entity": {
-                        "domain": "acme.co",
-                        "name": "Acme",
-                        "isGlobal": True,
-                        "domains": ["acme.co"],
-                        "id": 1,
-                        "fields": [
-                            {
-                                "enrichmentSource": "affinity-data",
-                                "name": "Location",
-                                "id": "affinity-data-location",
-                                "type": "enriched",
-                                "value": {
-                                    "data": {
-                                        "continent": "North America",
-                                        "country": "United States",
-                                        "streetAddress": "170 Columbus Ave",
-                                        "city": "San Francisco",
-                                        "state": "California",
-                                    },
-                                    "type": "location",
-                                },
-                            },
-                            {
-                                "enrichmentSource": "affinity-data",
-                                "name": "Location",
-                                "id": "affinity-data-location",
-                                "type": "enriched",
-                                "value": {
-                                    "data": {
-                                        "continent": "North America",
-                                        "country": "United States",
-                                        "streetAddress": "170 Columbus Ave",
-                                        "city": "San Francisco",
-                                        "state": "California",
-                                    },
-                                    "type": "location",
-                                },
-                            },
-                        ],
-                    },
-                }
-            ],
-        ),
+        Field(discriminator="type", title="ListEntryWithEntity"),
     ]
 
 
 class ListEntryWithEntityPaged(MyBaseModel):
-    data: List[ListEntryWithEntity] | None
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[ListEntryWithEntity] | None, Field(max_length=100)]
     """
     A page of ListEntryWithEntity results
     """
     pagination: Pagination
 
 
-class Type6(Enum):
+class FieldPaged(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[FieldModel], Field(max_length=100)]
+    """
+    A page of Field results
+    """
+    pagination: Pagination
+
+
+class CompanyReference(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    id: Annotated[int, Field(ge=1, le=9007199254740991)]
+    """
+    The company's unique identifier
+    """
+
+
+class CompaniesValueUpdate(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["company-multi"]
+    """
+    The type of value
+    """
+    data: Annotated[List[CompanyReference] | None, Field(max_length=100)]
+    """
+    The values for many companies
+    """
+
+
+class CompanyValueUpdate(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["company"]
+    """
+    The type of value
+    """
+    data: CompanyReference | None = None
+
+
+class DropdownReference(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    dropdownOptionId: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
+    """
+    Dropdown item's unique identifier
+    """
+
+
+class DropdownValueUpdate(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["dropdown"]
+    """
+    The type of value
+    """
+    data: DropdownReference | None = None
+
+
+class DropdownsValueUpdate(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["dropdown-multi"]
+    """
+    The type of value
+    """
+    data: List[DropdownReference] | None
+    """
+    The value for many dropdown items
+    """
+
+
+class PersonReference(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
+    """
+    The persons's unique identifier
+    """
+
+
+class PersonValueUpdate(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["person"]
+    """
+    The type of value
+    """
+    data: PersonReference | None = None
+
+
+class PersonsValueUpdate(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["person-multi"]
+    """
+    The type of value
+    """
+    data: Annotated[List[PersonReference] | None, Field(max_length=100)]
+    """
+    The values for many persons
+    """
+
+
+class RankedDropdownReference(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    dropdownOptionId: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
+    """
+    Ranked Dropdown item's unique identifier
+    """
+
+
+class RankedDropdownValueUpdate(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    type: Literal["ranked-dropdown"]
+    """
+    The type of value
+    """
+    data: RankedDropdownReference | None = None
+
+
+class FieldValueUpdate(
+    RootModel[
+        CompaniesValueUpdate
+        | CompanyValueUpdate
+        | DateValue
+        | DropdownValueUpdate
+        | DropdownsValueUpdate
+        | FloatValue
+        | FloatsValue
+        | LocationValue
+        | LocationsValue
+        | PersonValueUpdate
+        | PersonsValueUpdate
+        | RankedDropdownValueUpdate
+        | TextValue
+        | TextsValue
+    ]
+):
+    root: Annotated[
+        CompaniesValueUpdate
+        | CompanyValueUpdate
+        | DateValue
+        | DropdownValueUpdate
+        | DropdownsValueUpdate
+        | FloatValue
+        | FloatsValue
+        | LocationValue
+        | LocationsValue
+        | PersonValueUpdate
+        | PersonsValueUpdate
+        | RankedDropdownValueUpdate
+        | TextValue
+        | TextsValue,
+        Field(
+            discriminator="type",
+            examples=[
+                {
+                    "type": "location",
+                    "data": {
+                        "continent": "North America",
+                        "country": "United States",
+                        "streetAddress": "1 Main Street",
+                        "city": "San Francisco",
+                        "state": "California",
+                    },
+                }
+            ],
+            title="FieldValueUpdate",
+        ),
+    ]
+
+
+class Update(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    id: Annotated[str, Field(examples=["field-105"])]
+    """
+    The field's unique identifier.
+    """
+    value: FieldValueUpdate | None = None
+
+
+class ListEntryBatchOperationUpdateFields(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    operation: Literal["update-fields"]
+    updates: Annotated[List[Update], Field(max_length=100)]
+
+
+class ListEntryBatchOperationRequest(RootModel[ListEntryBatchOperationUpdateFields]):
+    root: Annotated[
+        ListEntryBatchOperationUpdateFields,
+        Field(discriminator="operation", title="ListEntryBatchOperationRequest"),
+    ]
+
+
+class ListEntryBatchOperations(Enum):
+    UPDATE_FIELDS = "update-fields"
+
+
+class ListEntryBatchOperationResponse(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    operation: ListEntryBatchOperations | None = None
+
+
+class FieldUpdate(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    value: FieldValueUpdate | None = None
+
+
+class Type7(Enum):
     SHEET = "sheet"
     BOARD = "board"
     DASHBOARD = "dashboard"
 
 
 class SavedView(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
     id: Annotated[int, Field(examples=[28], ge=1, le=9007199254740991)]
     """
     The saved view's unique identifier
@@ -1155,50 +1735,292 @@ class SavedView(MyBaseModel):
     """
     The saved view's name
     """
-    type: Annotated[Type6, Field(examples=["sheet"])]
+    type: Annotated[Type7, Field(examples=["sheet"])]
     """
     The type for this saved view
     """
-    createdAt: Annotated[datetime, Field(examples=["2023-01-01T00:00:00Z"])]
+    createdAt: Annotated[AwareDatetime, Field(examples=["2023-01-01T00:00:00Z"])]
     """
     The date that the saved view was created
     """
 
 
 class SavedViewPaged(MyBaseModel):
-    data: List[SavedView]
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[SavedView], Field(max_length=100)]
     """
     A page of SavedView results
     """
     pagination: Pagination
 
 
-class Opportunity(MyBaseModel):
-    id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
+class CompanyDataPaged(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[CompanyData], Field(max_length=100)]
     """
-    The unique identifier for the opportunity
+    A page of Company results
     """
-    name: Annotated[str, Field(examples=["Acme Upsell $10k"])]
-    """
-    The name of the opportunity
-    """
-    listId: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
-    """
-    The ID of the list that the opportunity belongs to
-    """
+    pagination: Pagination
 
 
 class OpportunityPaged(MyBaseModel):
-    data: List[Opportunity]
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[Opportunity], Field(max_length=100)]
     """
     A page of Opportunity results
     """
     pagination: Pagination
 
 
-class PersonPaged(MyBaseModel):
-    data: List[Person]
+class PersonDataPaged(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[PersonData], Field(max_length=100)]
     """
     A page of Person results
+    """
+    pagination: Pagination
+
+
+class PersonPaged(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[Person], Field(max_length=100)]
+    """
+    A page of Person results
+    """
+    pagination: Pagination
+
+
+class PersonMergeState(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    id: Annotated[int, Field(examples=[12345], ge=1, le=9007199254740991)]
+    """
+    The unique identifier for the merge
+    """
+    status: Annotated[Status, Field(examples=["success"])]
+    """
+    Current status of the merge
+    """
+    taskId: Annotated[UUID, Field(examples=["789e0123-e45b-67c8-d901-234567890123"])]
+    """
+    Identifier for the task this merge belongs to
+    """
+    startedAt: Annotated[AwareDatetime, Field(examples=["2025-06-03T10:30:00Z"])]
+    """
+    Timestamp when the merge started
+    """
+    primaryPersonId: Annotated[int, Field(examples=[12345], ge=1, le=9007199254740991)]
+    """
+    ID of the primary person that other profiles were merged into
+    """
+    duplicatePersonId: Annotated[
+        int, Field(examples=[67890], ge=1, le=9007199254740991)
+    ]
+    """
+    ID of the duplicate person that was merged into the primary person
+    """
+    completedAt: Annotated[
+        AwareDatetime | None, Field(examples=["2025-06-03T10:32:15Z", None])
+    ] = None
+    """
+    Timestamp when the merge completed (success or failure)
+    """
+    errorMessage: Annotated[
+        str | None, Field(examples=["Primary person not found", None])
+    ] = None
+    """
+    Error message if the merge failed
+    """
+
+
+class PersonMergeStatePaged(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[PersonMergeState], Field(max_length=100)]
+    """
+    Array of person merge states
+    """
+    pagination: Pagination
+
+
+class PersonMergeRequest(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    primaryPersonId: Annotated[int, Field(examples=[12345], ge=1, le=9007199254740991)]
+    """
+    The ID of the person profile that will be kept after the merge. All data from the duplicate person will be merged into this person.
+    """
+    duplicatePersonId: Annotated[
+        int, Field(examples=[67890], ge=1, le=9007199254740991)
+    ]
+    """
+    The ID of the person profile that will be merged and then deleted. All data from this person will be transferred to the primary person.
+    """
+
+
+class PersonMergeResponse(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    taskUrl: Annotated[
+        AnyUrl,
+        Field(
+            examples=[
+                "https://api.affinit.com/tasks/person-merges/123e4567-e89b-12d3-a456-426614174000"
+            ]
+        ),
+    ]
+    """
+    URL to check the status of the merge task
+    """
+
+
+class ResultsSummary(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    total: Annotated[int, Field(examples=[5], ge=0, le=2147483647)]
+    """
+    Total number of merges in the batch
+    """
+    inProgress: Annotated[int, Field(examples=[2], ge=0, le=2147483647)]
+    """
+    Number of merges currently in progress
+    """
+    success: Annotated[int, Field(examples=[2], ge=0, le=2147483647)]
+    """
+    Number of successfully completed merges
+    """
+    failed: Annotated[int, Field(examples=[1], ge=0, le=2147483647)]
+    """
+    Number of failed merges
+    """
+
+
+class PersonMergeTask(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    id: Annotated[UUID, Field(examples=["123e4567-e89b-12d3-a456-426614174000"])]
+    """
+    The unique identifier for this merge task
+    """
+    status: Annotated[Status, Field(examples=["in-progress"])]
+    """
+    The current status of the batch operation
+    """
+    resultsSummary: ResultsSummary
+    """
+    Summary of merges in this batch task
+    """
+
+
+class PersonMergeTaskPaged(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[
+        List[PersonMergeTask],
+        Field(
+            examples=[
+                [
+                    {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "status": "success",
+                        "resultsSummary": {
+                            "total": 1,
+                            "inProgress": 0,
+                            "success": 1,
+                            "failed": 0,
+                        },
+                    },
+                    {
+                        "id": "456e7890-e12b-34c5-d678-901234567890",
+                        "status": "failed",
+                        "resultsSummary": {
+                            "total": 1,
+                            "inProgress": 0,
+                            "success": 0,
+                            "failed": 1,
+                        },
+                    },
+                ]
+            ],
+            max_length=100,
+        ),
+    ]
+    """
+    Array of person merge tasks
+    """
+    pagination: Pagination
+
+
+class CompanyMergeTask(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    id: Annotated[UUID, Field(examples=["123e4567-e89b-12d3-a456-426614174000"])]
+    """
+    The unique identifier for this merge task
+    """
+    status: Annotated[Status, Field(examples=["in-progress"])]
+    """
+    The current status of the batch operation
+    """
+    resultsSummary: ResultsSummary
+    """
+    Summary of merges in this batch task
+    """
+
+
+class CompanyMergeTaskPaged(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[
+        List[CompanyMergeTask],
+        Field(
+            examples=[
+                [
+                    {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "status": "success",
+                        "resultsSummary": {
+                            "total": 1,
+                            "inProgress": 0,
+                            "success": 1,
+                            "failed": 0,
+                        },
+                    },
+                    {
+                        "id": "456e7890-e12b-34c5-d678-901234567890",
+                        "status": "failed",
+                        "resultsSummary": {
+                            "total": 1,
+                            "inProgress": 0,
+                            "success": 0,
+                            "failed": 1,
+                        },
+                    },
+                ]
+            ],
+            max_length=100,
+        ),
+    ]
+    """
+    Array of company merge tasks
     """
     pagination: Pagination
