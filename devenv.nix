@@ -21,7 +21,7 @@
   languages.python.version = "3.12";
 
   scripts.generate-model.exec = ''
-    ./source/model/generate_model.sh
+    ./dlt_source_affinity/model/generate_model.sh
   '';
 
   git-hooks.hooks = {
