@@ -1,2 +1,4 @@
-v2.py linguist-generated=true
+interactions.py linguist-generated=true
+notes.py linguist-generated=true
+__init__.py linguist-generated=true
 *_spec.json linguist-vendored=true
