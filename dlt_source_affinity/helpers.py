@@ -1,6 +1,5 @@
 """Affinity CRM source helpers"""
 
-from dlt.sources.helpers import requests
 from typing import NamedTuple
 
 

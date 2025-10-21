@@ -2,17 +2,16 @@ import json
 from typing import Any
 
 import dlt
+from dlt.sources.helpers.requests.session import Session
 from dlt.sources.helpers.rest_client.auth import BearerTokenAuth, HttpBasicAuth
-from dlt.sources.helpers.rest_client.client import RESTClient, Response
+from dlt.sources.helpers.rest_client.client import Response, RESTClient
 from dlt.sources.helpers.rest_client.paginators import (
     JSONLinkPaginator,
     JSONResponseCursorPaginator,
 )
 
-from .type_adapters import error_adapter
 from .settings import API_BASE, V2_PREFIX
-from dlt.sources.helpers.requests.session import Session
-
+from .type_adapters import error_adapter
 
 # Share a session (and thus pool) between all rest clients
 session: Session = None

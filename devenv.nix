@@ -31,7 +31,8 @@ in
     shellcheck.excludes = [
       ".envrc"
     ];
-    black.enable = true;
+    ruff.enable = true;
+    ruff-format.enable = true;
     typos.enable = true;
     yamllint.enable = true;
     yamlfmt.enable = true;
