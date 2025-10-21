@@ -3,14 +3,14 @@ name = "dlt-source-affinity"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "dlt>=1.5.0",
+    "dlt>=1.17.1",
     "pydantic-flatten-rootmodel>=0.1.2",
 ]
 dynamic = ["authors", "classifiers", "version", "description"]
 
 [project.optional-dependencies]
 show = [
-    "dlt[duckdb]>=1.5.0",
+    "dlt[duckdb]>=1.17.1",
     "streamlit>=1.41.1",
     "watchdog>=6.0.0",
 ]
@@ -18,6 +18,7 @@ show = [
 [dependency-groups]
 dev = [
     "datamodel-code-generator>=0.26.4",
+    "dlt[workspace]>=1.17.1",
     "pytest>=8.3.4",
 ]
 
