@@ -46,9 +46,8 @@ build-backend = "hatchling.build"
 vcs = "git"
 style = "semver"
 bump = true
-# TODO: enable strict mode once we have a tag
-# strict = true
-# latest-tag = true
+strict = true
+latest-tag = true
 
 [tool.hatch.build]
 include = [
