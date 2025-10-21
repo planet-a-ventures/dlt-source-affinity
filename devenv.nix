@@ -42,6 +42,12 @@ in
     commitizen.package = pkgs-unstable.commitizen;
     nixfmt-rfc-style.enable = true;
     markdownlint.enable = true;
+    mdformat.enable = true;
+    mdformat.package = pkgs.mdformat.withPlugins (
+      ps: with ps; [
+        mdformat-frontmatter
+      ]
+    );
     trufflehog.enable = true;
   };
 
