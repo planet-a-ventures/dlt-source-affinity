@@ -1,5 +1,5 @@
-from .model import Errors, ListEntryWithEntity
-from .model.notes import Note
+from .model.v2 import Errors, ListEntryWithEntity
+from .model.v1 import Note
 
 from pydantic import TypeAdapter
 
