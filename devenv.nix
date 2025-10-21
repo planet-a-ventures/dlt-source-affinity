@@ -41,16 +41,23 @@ in
     commitizen.package = pkgs-unstable.commitizen;
     nixfmt-rfc-style.enable = true;
     markdownlint.enable = true;
+    trufflehog.enable = true;
   };
 
   scripts.format.exec = ''
-    yamlfmt .
     markdownlint --fix .
     pre-commit run --all-files
   '';
 
   scripts.test-all.exec = ''
     pytest -s -vv "$@"
+  '';
+
+  scripts.deps-upgrade.exec = ''
+    uv \
+      sync \
+      --all-extras \
+      --upgrade
   '';
 
   enterTest = ''
