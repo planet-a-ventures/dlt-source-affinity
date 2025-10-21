@@ -1,8 +1,16 @@
-diff --git a/sources/affinity/model/v2_spec.json b/sources/affinity/model/v2_spec.json
-index df150660..97c2863c 100644
---- a/sources/affinity/model/v2_spec.json
-+++ b/sources/affinity/model/v2_spec.json
-@@ -1635,7 +1635,6 @@
+diff --git a/dlt_source_affinity/model/v2_spec.json b/dlt_source_affinity/model/v2_spec.json
+index 89427f2..6d39867 100644
+--- a/dlt_source_affinity/model/v2_spec.json
++++ b/dlt_source_affinity/model/v2_spec.json
+@@ -5339,7 +5339,6 @@
+           "subdomain": {
+             "description": "The tenant's subdomain under affinity.co",
+             "type": "string",
+-            "format": "hostname",
+             "examples": [
+               "contoso"
+             ]
+@@ -5393,7 +5392,6 @@
            "emailAddress": {
              "description": "The user's email address",
              "type": "string",
@@ -10,15 +18,7 @@ index df150660..97c2863c 100644
              "examples": [
                "john.smith@contoso.com"
              ]
-@@ -1879,7 +1878,6 @@
-               "string",
-               "null"
-             ],
--            "format": "hostname",
-             "examples": [
-               "acme.co"
-             ]
-@@ -2163,7 +2161,6 @@
+@@ -5583,7 +5581,6 @@
                "string",
                "null"
              ],
@@ -26,7 +26,7 @@ index df150660..97c2863c 100644
              "examples": [
                "jane.doe@acme.co"
              ]
-@@ -2258,7 +2255,6 @@
+@@ -5620,7 +5617,6 @@
                "string",
                "null"
              ],
@@ -34,15 +34,24 @@ index df150660..97c2863c 100644
              "examples": [
                "john.smith@contoso.com"
              ]
-@@ -2787,6 +2783,18 @@
-           "type"
-         ]
+@@ -6017,7 +6013,6 @@
+               "string",
+               "null"
+             ],
+-            "format": "hostname",
+             "examples": [
+               "acme.co"
+             ]
+@@ -6265,6 +6260,19 @@
+         ],
+         "additionalProperties": false
        },
 +      "LinkedInEntry": {
 +        "title": "LinkedInEntry",
 +        "type": "object",
 +        "properties": {
 +          "link": {
++            "description": "The link to the LinkedIn entry",
 +            "type": "string"
 +          },
 +          "text": {
@@ -53,7 +62,7 @@ index df150660..97c2863c 100644
        "TextsValue": {
          "title": "TextsValue",
          "type": "object",
-@@ -2798,13 +2806,23 @@
+@@ -6276,13 +6284,23 @@
            },
            "data": {
              "description": "The value for many strings",
@@ -84,7 +93,7 @@ index df150660..97c2863c 100644
            }
          },
          "required": [
-@@ -3000,7 +3018,6 @@
+@@ -7084,7 +7102,6 @@
                "string",
                "null"
              ],
@@ -92,7 +101,7 @@ index df150660..97c2863c 100644
              "examples": [
                "acme.co"
              ]
-@@ -3009,8 +3026,7 @@
+@@ -7093,8 +7110,7 @@
              "description": "All of the company's domains",
              "type": "array",
              "items": {
@@ -102,25 +111,7 @@ index df150660..97c2863c 100644
              },
              "examples": [
                [
-@@ -3095,7 +3111,7 @@
-               "string",
-               "null"
-             ],
--            "format": "url",
-+            "format": "uri",
-             "examples": [
-               "https://api.affinity.co/v2/foo?cursor=ICAgICAgYmVmb3JlOjo6Nw"
-             ]
-@@ -3106,7 +3122,7 @@
-               "string",
-               "null"
-             ],
--            "format": "url",
-+            "format": "uri",
-             "examples": [
-               "https://api.affinity.co/v2/foo?cursor=ICAgICAgIGFmdGVyOjo6NA"
-             ]
-@@ -4120,7 +4136,6 @@
+@@ -8965,7 +8981,6 @@
                "string",
                "null"
              ],
@@ -128,7 +119,7 @@ index df150660..97c2863c 100644
              "examples": [
                "jane.doe@acme.co"
              ]
-@@ -4129,8 +4144,7 @@
+@@ -8974,8 +8989,7 @@
              "description": "All of the person's email addresses",
              "type": "array",
              "items": {

@@ -21,7 +21,7 @@
   languages.python.version = "3.12";
 
   scripts.generate-model.exec = ''
-    ./source/model/generate_model.sh
+    $DEVENV_ROOT/dlt_source_affinity/model/generate_model.sh
   '';
 
   git-hooks.hooks = {
@@ -55,10 +55,11 @@
   '';
 
   scripts.sample-pipeline-run.exec = ''
-    python affinity_pipeline.py
+    python $DEVENV_ROOT/affinity_pipeline.py
   '';
 
   scripts.sample-pipeline-show.exec = ''
+    cd "$DEVENV_ROOT"
     dlt pipeline affinity_pipeline show
   '';
 }

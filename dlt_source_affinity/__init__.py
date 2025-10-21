@@ -405,9 +405,9 @@ def __create_entity_resource(entity_name: ENTITY, dev_mode=False) -> DltResource
                 "limit": len(ids),
                 "ids": ids,
                 "fieldTypes": [
-                    Type2.ENRICHED.value,
-                    Type2.GLOBAL_.value,
-                    Type2.RELATIONSHIP_INTELLIGENCE.value,
+                    Type3.ENRICHED.value,
+                    Type3.GLOBAL_.value,
+                    Type3.RELATIONSHIP_INTELLIGENCE.value,
                 ],
             },
             hooks=hooks,
@@ -471,10 +471,10 @@ def __create_list_entries_resource(list_ref: ListReference, dev_mode=False):
                 params={
                     "limit": MAX_PAGE_LIMIT_V2,
                     "fieldTypes": [
-                        Type2.ENRICHED.value,
-                        Type2.GLOBAL_.value,
-                        Type2.RELATIONSHIP_INTELLIGENCE.value,
-                        Type2.LIST.value,
+                        Type3.ENRICHED.value,
+                        Type3.GLOBAL_.value,
+                        Type3.RELATIONSHIP_INTELLIGENCE.value,
+                        Type3.LIST.value,
                     ],
                 },
                 hooks=hooks,
