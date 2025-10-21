@@ -23,10 +23,12 @@ main() {
     log "Applied spec patch"
 
     log "Generating code from OpenAPI spec"
+    rm -rf ./v2
+    mkdir -p ./v2
     # we need to ignore extra fields because DLT adds extra fields to models like _dlt_id, etc.
     datamodel-codegen \
         --input v2_spec.json \
-        --output . \
+        --output ./v2 \
         --output-model-type pydantic_v2.BaseModel \
         --use-annotated \
         --use-union-operator \
@@ -35,7 +37,7 @@ main() {
         --input-file-type openapi \
         --field-constraints \
         --use-double-quotes \
-        --base-class .my_base_model.MyBaseModel \
+        --base-class ...MyBaseModel \
         --disable-timestamp \
         --target-python-version "${python_version}" \
         --extra-fields "ignore"

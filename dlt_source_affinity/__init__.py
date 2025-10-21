@@ -23,8 +23,8 @@ from .rest_client import (
     MAX_PAGE_LIMIT_V2,
 )
 from .type_adapters import note_adapter, list_adapter
-from .model.notes import Note
-from .model import *
+from .model.v1 import Note, InteractionTypeToLiteral
+from .model.v2 import *
 from .helpers import ListReference, generate_list_entries_path
 
 
@@ -147,10 +147,18 @@ FlattenedInteraction = flatten_root_model(Interaction)
 dlt_config: DltConfig = {"skip_nested_types": True}
 setattr(FlattenedInteraction, "dlt_config", dlt_config)
 
+DltNote = deepcopy(Note)
+interaction_type = Optional[Literal[tuple(InteractionTypeToLiteral.values())]]
+DltNote.__annotations__["interaction_type"] = interaction_type
+DltNote.model_fields["interaction_type"] = FieldInfo.from_annotation(interaction_type)
+# TODO: use something better than str here
+DltNote.__annotations__["type"] = str
+DltNote.model_fields["type"] = FieldInfo.from_annotation(str)
+
 
 @dlt.resource(
     primary_key="id",
-    columns=Note,
+    columns=DltNote,
     max_table_nesting=1,
     write_disposition="replace",
     parallelized=True,

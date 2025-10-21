@@ -8,8 +8,8 @@ from typing import Annotated, List, Literal
 
 from pydantic import AwareDatetime, ConfigDict, Field, RootModel
 
+from .. import MyBaseModel
 from . import CompanyData, Opportunity, PaginationWithTotalCount, PersonData
-from .my_base_model import MyBaseModel
 
 
 class Content(MyBaseModel):

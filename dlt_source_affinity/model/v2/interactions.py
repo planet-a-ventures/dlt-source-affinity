@@ -8,6 +8,7 @@ from typing import Annotated, List, Literal
 
 from pydantic import AwareDatetime, ConfigDict, Field
 
+from .. import MyBaseModel
 from . import (
     Attendee,
     AttendeesPreview,
@@ -15,7 +16,6 @@ from . import (
     PersonData,
     PersonDataPreview,
 )
-from .my_base_model import MyBaseModel
 
 
 class Call(MyBaseModel):
