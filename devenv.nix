@@ -5,11 +5,14 @@
   inputs,
   ...
 }:
-
+let
+  pkgs-unstable = import inputs.nixpkgs-unstable { system = pkgs.stdenv.system; };
+in
 {
   packages = [
     pkgs.git
     pkgs.bash
+    pkgs.python312Packages.setuptools
   ];
 
   languages.python.enable = true;
@@ -26,24 +29,43 @@
 
   git-hooks.hooks = {
     shellcheck.enable = true;
-    black.enable = true;
+    shellcheck.excludes = [
+      ".envrc"
+    ];
+    ruff.enable = true;
+    ruff-format.enable = true;
     typos.enable = true;
     yamllint.enable = true;
     yamlfmt.enable = true;
+    yamlfmt.settings.lint-only = false;
     check-toml.enable = true;
     commitizen.enable = true;
+    commitizen.package = pkgs-unstable.commitizen;
     nixfmt-rfc-style.enable = true;
     markdownlint.enable = true;
+    mdformat.enable = true;
+    mdformat.package = pkgs.mdformat.withPlugins (
+      ps: with ps; [
+        mdformat-frontmatter
+      ]
+    );
+    trufflehog.enable = true;
   };
 
   scripts.format.exec = ''
-    yamlfmt .
     markdownlint --fix .
     pre-commit run --all-files
   '';
 
   scripts.test-all.exec = ''
     pytest -s -vv "$@"
+  '';
+
+  scripts.deps-upgrade.exec = ''
+    uv \
+      sync \
+      --all-extras \
+      --upgrade
   '';
 
   enterTest = ''

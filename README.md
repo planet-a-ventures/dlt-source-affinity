@@ -57,20 +57,20 @@ pipeline.run(affinity_data)
 
 Resources that can be loaded using this verified source are:
 
-| Name                                                              | Description                                         | API version | [Permissions](https://developer.affinity.co/#section/Getting-Started/Permissions) needed |
+| Name | Description | API version | [Permissions](https://developer.affinity.co/#section/Getting-Started/Permissions) needed |
 | -- | -- | -- | -- |
-| [companies](https://developer.affinity.co/#tag/companies)         | The stored companies                                | V2          | Requires the "Export All Organizations directory" permission.                            |
-| [persons](https://developer.affinity.co/#tag/persons)             | The stored persons                                  | V2          | Requires the "Export All People directory" permission.                                   |
-| [opportunities](https://developer.affinity.co/#tag/opportunities) | The stored opportunities                            | V2          | Requires the "Export data from Lists" permission.                                        |
-| [lists](https://developer.affinity.co/#tag/lists)                 | A given list and/or a saved view of a list          | V2          | Requires the "Export data from Lists" permission.                                        |
-| [notes](https://api-docs.affinity.co/#notes)                      | Notes attached to companies, persons, opportunities | Legacy      | n/a                                                                                      |
+| [companies](https://developer.affinity.co/#tag/companies) | The stored companies | V2 | Requires the "Export All Organizations directory" permission. |
+| [persons](https://developer.affinity.co/#tag/persons) | The stored persons | V2 | Requires the "Export All People directory" permission. |
+| [opportunities](https://developer.affinity.co/#tag/opportunities) | The stored opportunities | V2 | Requires the "Export data from Lists" permission. |
+| [lists](https://developer.affinity.co/#tag/lists) | A given list and/or a saved view of a list | V2 | Requires the "Export data from Lists" permission. |
+| [notes](https://api-docs.affinity.co/#notes) | Notes attached to companies, persons, opportunities | Legacy | n/a |
 
 ## V1 vs V2
 
 There are two versions of the Affinity API:
 
 1. [Legacy](https://api-docs.affinity.co/) which is available for all plans.
-2. [V2](https://developer.affinity.co/) which is only available for customers
+1. [V2](https://developer.affinity.co/) which is only available for customers
    with an enterprise plan.
 
 This verified source makes use of both API endpoints.
@@ -108,3 +108,21 @@ Run
 ```sh
 generate-model
 ```
+
+## 🚀 Development Workflow
+
+1. **Make changes** to your code
+1. **Format code** with `format` before committing
+1. **Commit changes** - pre-commit hooks will run automatically
+1. **Push to GitHub** - CI will run tests on multiple platforms
+1. **Create release** by pushing a tag (format: `vX.X.X`)
+
+## 📦 Publishing
+
+Publishing to PyPI is fully automated:
+
+1. Create a new tag: `git tag v1.0.0`
+1. Push the tag: `git push origin v1.0.0`
+1. GitHub Actions will automatically build and publish to PyPI
+
+The project uses trusted publishing, so no API keys are required.

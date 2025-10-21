@@ -1,31 +1,75 @@
 """A source loading entities and lists from Affinity CRM (affinity.co)"""
 
-from copy import deepcopy
-from dataclasses import field
-from enum import StrEnum
-from typing import Any, Dict, Generator, Iterable, List, Optional, Sequence, Tuple
 import logging
+from copy import deepcopy
+from dataclasses import field as dataclass_field
+from enum import StrEnum
+from typing import (
+    Any,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+)
+
 import dlt
-from dlt.common.typing import TDataItem
-from dlt.sources import DltResource
-from dlt.extract.items import DataItemWithMeta
+from dlt.common.libs.pydantic import DltConfig
 from dlt.common.logger import is_logging
 from dlt.common.schema.typing import TTableReferenceParam
-from dlt.common.libs.pydantic import DltConfig
-from pydantic_flatten_rootmodel import flatten_root_model
+from dlt.common.typing import TDataItem
+from dlt.extract.items import DataItemWithMeta
+from dlt.sources import DltResource
 from pydantic import BaseModel, TypeAdapter
 from pydantic.fields import FieldInfo
+from pydantic_flatten_rootmodel import flatten_root_model
+
+from .helpers import ListReference, generate_list_entries_path
+from .model.v1 import InteractionTypeToLiteral, Note
+from .model.v2 import (
+    Attendee,
+    ChatMessage,
+    CompaniesValue,
+    Company,
+    CompanyPaged,
+    CompanyValue,
+    DateValue,
+    Dropdown,
+    DropdownsValue,
+    DropdownValue,
+    FieldModel,
+    FloatsValue,
+    FloatValue,
+    FormulaValue,
+    Interaction,
+    InteractionValue,
+    ListModel,
+    LocationsValue,
+    LocationValue,
+    Opportunity,
+    OpportunityPaged,
+    OpportunityWithFields,
+    Person,
+    PersonPaged,
+    PersonsValue,
+    PersonValue,
+    RankedDropdown,
+    RankedDropdownValue,
+    TextsValue,
+    TextValue,
+    Type3,
+)
 from .rest_client import (
+    MAX_PAGE_LIMIT_V1,
+    MAX_PAGE_LIMIT_V2,
     get_v1_rest_client,
     get_v2_rest_client,
     hooks,
-    MAX_PAGE_LIMIT_V1,
-    MAX_PAGE_LIMIT_V2,
 )
-from .type_adapters import note_adapter, list_adapter
-from .model.v1 import Note, InteractionTypeToLiteral
-from .model.v2 import *
-from .helpers import ListReference, generate_list_entries_path
+from .type_adapters import list_adapter, note_adapter
 
 
 def pydantic_model_dump(model: BaseModel, **kwargs):
@@ -518,7 +562,8 @@ def __create_list_entries_resource(list_ref: ListReference, dev_mode=False):
 
 @dlt.source(name="affinity")
 def source(
-    list_refs: List[ListReference] = field(default_factory=list), dev_mode=False
+    list_refs: List[ListReference] = dataclass_field(default_factory=list),
+    dev_mode=False,
 ) -> Sequence[DltResource]:
     """
     list_refs - one or more references to lists and/or saved list views

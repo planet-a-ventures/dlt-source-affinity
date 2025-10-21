@@ -1,12 +1,12 @@
+from datetime import datetime
 from enum import IntEnum
 from inspect import get_annotations
-from pydantic import BaseModel, Field, model_serializer
-from typing import ClassVar, List, Annotated, get_args
-from datetime import datetime
+from typing import Annotated, ClassVar, List, get_args
 
 from dlt.common.libs.pydantic import DltConfig
+from pydantic import BaseModel, Field, model_serializer
 
-from .v2 import ChatMessage, PhoneCall, Email, Meeting
+from .v2 import ChatMessage, Email, Meeting, PhoneCall
 
 
 class NoteType(IntEnum):
