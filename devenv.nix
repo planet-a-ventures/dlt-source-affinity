@@ -12,6 +12,7 @@ in
   packages = [
     pkgs.git
     pkgs.bash
+    pkgs.python312Packages.setuptools
   ];
 
   languages.python.enable = true;

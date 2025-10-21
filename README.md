@@ -108,3 +108,21 @@ Run
 ```sh
 generate-model
 ```
+
+## 🚀 Development Workflow
+
+1. **Make changes** to your code
+1. **Format code** with `format` before committing
+1. **Commit changes** - pre-commit hooks will run automatically
+1. **Push to GitHub** - CI will run tests on multiple platforms
+1. **Create release** by pushing a tag (format: `vX.X.X`)
+
+## 📦 Publishing
+
+Publishing to PyPI is fully automated:
+
+1. Create a new tag: `git tag v1.0.0`
+1. Push the tag: `git push origin v1.0.0`
+1. GitHub Actions will automatically build and publish to PyPI
+
+The project uses trusted publishing, so no API keys are required.

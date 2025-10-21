@@ -1,16 +1,29 @@
 [project]
 name = "dlt-source-affinity"
-readme = "README.md"
+readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.12"
 dependencies = [
     "dlt>=1.17.1",
     "pydantic-flatten-rootmodel>=0.1.2",
 ]
-dynamic = ["authors", "classifiers", "version", "description"]
+dynamic = ["version"]
+author="Planet A GmbH"
+author_email="dev@planet-a.com"
+description="A DLT source for the Affinity CRM"
+license = { text = "MIT" }
+classifiers=[
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries",    
+]
 
 [project.optional-dependencies]
 show = [
     "dlt[duckdb]>=1.17.1",
+    "dlt[workspace]>=1.17.1",
     "streamlit>=1.41.1",
     "watchdog>=6.0.0",
 ]
@@ -18,10 +31,38 @@ show = [
 [dependency-groups]
 dev = [
     "datamodel-code-generator>=0.26.4",
-    "dlt[workspace]>=1.17.1",
     "pytest>=8.3.4",
 ]
 
 [tool.ruff]
 lint.extend-select = ["I"]
 # unsafe-fixes = true
+
+[build-system]
+requires = ["hatchling", "uv-dynamic-versioning"]
+build-backend = "hatchling.build"
+
+[tool.uv-dynamic-versioning]
+vcs = "git"
+style = "semver"
+bump = true
+# TODO: enable strict mode once we have a tag
+# strict = true
+# latest-tag = true
+
+[tool.hatch.build]
+include = [
+  "dlt_source_affinity"
+]
+exclude = [
+    "dlt_source_affinity/tests",
+    "dlt_source_affinity/model/generate_model.sh",
+    "dlt_source_affinity/model/current_python_major_minor.py",
+    "dlt_source_affinity/model/v2_spec_patches.diff",
+    "dlt_source_affinity/model/v2_model_patches.diff",
+    "dlt_source_affinity/model/v2_spec.json",
+    "dlt_source_affinity/model/README.md",
+]
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
