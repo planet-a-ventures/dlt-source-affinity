@@ -5,7 +5,9 @@
   inputs,
   ...
 }:
-
+let
+  pkgs-unstable = import inputs.nixpkgs-unstable { system = pkgs.stdenv.system; };
+in
 {
   packages = [
     pkgs.git
@@ -26,12 +28,17 @@
 
   git-hooks.hooks = {
     shellcheck.enable = true;
+    shellcheck.excludes = [
+      ".envrc"
+    ];
     black.enable = true;
     typos.enable = true;
     yamllint.enable = true;
     yamlfmt.enable = true;
+    yamlfmt.settings.lint-only = false;
     check-toml.enable = true;
     commitizen.enable = true;
+    commitizen.package = pkgs-unstable.commitizen;
     nixfmt-rfc-style.enable = true;
     markdownlint.enable = true;
   };

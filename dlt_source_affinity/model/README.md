@@ -1,6 +1,6 @@
 # OpenAPI spec
 
-You can find the latest version of the spec [here](https://developer.affinity.co/).
+Find the latest version of the spec on the [Affinity developer portal](https://developer.affinity.co/).
 
 ## How to regenerate
 
