@@ -734,7 +734,7 @@ class PhoneCall(MyBaseModel):
     """
     id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
     """
-    The phon_call's unique identifier
+    The phone call's unique identifier
     """
     startTime: Annotated[AwareDatetime, Field(examples=["2023-02-03T04:00:00Z"])]
     """
@@ -1077,43 +1077,6 @@ class FieldMetadataPaged(MyBaseModel):
     pagination: Pagination
 
 
-class ListModel(MyBaseModel):
-    model_config = ConfigDict(
-        extra="ignore",
-    )
-    id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
-    """
-    The unique identifier for the list
-    """
-    name: Annotated[str, Field(examples=["All companies"])]
-    """
-    The name of the list
-    """
-    creatorId: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
-    """
-    The ID of the user that created this list
-    """
-    ownerId: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
-    """
-    The ID of the user that owns this list
-    """
-    isPublic: Annotated[bool, Field(examples=[False])]
-    """
-    Whether or not the list is public
-    """
-
-
-class ListPaged(MyBaseModel):
-    model_config = ConfigDict(
-        extra="ignore",
-    )
-    data: Annotated[List[ListModel], Field(max_length=100)]
-    """
-    A page of List results
-    """
-    pagination: Pagination
-
-
 class ListEntry(MyBaseModel):
     model_config = ConfigDict(
         extra="ignore",
@@ -1149,6 +1112,43 @@ class ListEntryPaged(MyBaseModel):
     data: Annotated[List[ListEntry], Field(max_length=100)]
     """
     A page of ListEntry results
+    """
+    pagination: Pagination
+
+
+class ListModel(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    id: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
+    """
+    The unique identifier for the list
+    """
+    name: Annotated[str, Field(examples=["All companies"])]
+    """
+    The name of the list
+    """
+    creatorId: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
+    """
+    The ID of the user that created this list
+    """
+    ownerId: Annotated[int, Field(examples=[1], ge=1, le=9007199254740991)]
+    """
+    The ID of the user that owns this list
+    """
+    isPublic: Annotated[bool, Field(examples=[False])]
+    """
+    Whether or not the list is public
+    """
+
+
+class ListPaged(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[ListModel], Field(max_length=100)]
+    """
+    A page of List results
     """
     pagination: Pagination
 
@@ -1789,17 +1789,6 @@ class PersonDataPaged(MyBaseModel):
     pagination: Pagination
 
 
-class PersonPaged(MyBaseModel):
-    model_config = ConfigDict(
-        extra="ignore",
-    )
-    data: Annotated[List[Person], Field(max_length=100)]
-    """
-    A page of Person results
-    """
-    pagination: Pagination
-
-
 class PersonMergeState(MyBaseModel):
     model_config = ConfigDict(
         extra="ignore",
@@ -1888,6 +1877,17 @@ class PersonMergeResponse(MyBaseModel):
     """
 
 
+class PersonPaged(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[List[Person], Field(max_length=100)]
+    """
+    A page of Person results
+    """
+    pagination: Pagination
+
+
 class ResultsSummary(MyBaseModel):
     model_config = ConfigDict(
         extra="ignore",
@@ -1908,64 +1908,6 @@ class ResultsSummary(MyBaseModel):
     """
     Number of failed merges
     """
-
-
-class PersonMergeTask(MyBaseModel):
-    model_config = ConfigDict(
-        extra="ignore",
-    )
-    id: Annotated[UUID, Field(examples=["123e4567-e89b-12d3-a456-426614174000"])]
-    """
-    The unique identifier for this merge task
-    """
-    status: Annotated[Status, Field(examples=["in-progress"])]
-    """
-    The current status of the batch operation
-    """
-    resultsSummary: ResultsSummary
-    """
-    Summary of merges in this batch task
-    """
-
-
-class PersonMergeTaskPaged(MyBaseModel):
-    model_config = ConfigDict(
-        extra="ignore",
-    )
-    data: Annotated[
-        List[PersonMergeTask],
-        Field(
-            examples=[
-                [
-                    {
-                        "id": "123e4567-e89b-12d3-a456-426614174000",
-                        "status": "success",
-                        "resultsSummary": {
-                            "total": 1,
-                            "inProgress": 0,
-                            "success": 1,
-                            "failed": 0,
-                        },
-                    },
-                    {
-                        "id": "456e7890-e12b-34c5-d678-901234567890",
-                        "status": "failed",
-                        "resultsSummary": {
-                            "total": 1,
-                            "inProgress": 0,
-                            "success": 0,
-                            "failed": 1,
-                        },
-                    },
-                ]
-            ],
-            max_length=100,
-        ),
-    ]
-    """
-    Array of person merge tasks
-    """
-    pagination: Pagination
 
 
 class CompanyMergeTask(MyBaseModel):
@@ -2022,5 +1964,63 @@ class CompanyMergeTaskPaged(MyBaseModel):
     ]
     """
     Array of company merge tasks
+    """
+    pagination: Pagination
+
+
+class PersonMergeTask(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    id: Annotated[UUID, Field(examples=["123e4567-e89b-12d3-a456-426614174000"])]
+    """
+    The unique identifier for this merge task
+    """
+    status: Annotated[Status, Field(examples=["in-progress"])]
+    """
+    The current status of the batch operation
+    """
+    resultsSummary: ResultsSummary
+    """
+    Summary of merges in this batch task
+    """
+
+
+class PersonMergeTaskPaged(MyBaseModel):
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+    data: Annotated[
+        List[PersonMergeTask],
+        Field(
+            examples=[
+                [
+                    {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "status": "success",
+                        "resultsSummary": {
+                            "total": 1,
+                            "inProgress": 0,
+                            "success": 1,
+                            "failed": 0,
+                        },
+                    },
+                    {
+                        "id": "456e7890-e12b-34c5-d678-901234567890",
+                        "status": "failed",
+                        "resultsSummary": {
+                            "total": 1,
+                            "inProgress": 0,
+                            "success": 0,
+                            "failed": 1,
+                        },
+                    },
+                ]
+            ],
+            max_length=100,
+        ),
+    ]
+    """
+    Array of person merge tasks
     """
     pagination: Pagination
