@@ -17,8 +17,6 @@ from .type_adapters import error_adapter
 
 # Share a session (and thus pool) between all rest clients
 session: Session = None
-
-# logger = logging.getLogger(__name__)
 logger = logging.getLogger("dlt")
 
 
