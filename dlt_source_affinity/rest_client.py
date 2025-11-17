@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Any
 
 import dlt
@@ -16,6 +17,9 @@ from .type_adapters import error_adapter
 
 # Share a session (and thus pool) between all rest clients
 session: Session = None
+
+# logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlt")
 
 
 def get_v2_rest_client(
@@ -94,6 +98,9 @@ def remove_unknown_fields(response: Response, *args: Any, **kwargs: Any) -> None
                                         isinstance(field, dict)
                                         and field["value"]["type"] not in ValueType
                                     ):
+                                        logger.warning(
+                                            f"Removing field with unknown type: {field['value']['type']}"
+                                        )
                                         to_remove.append(field)
                                         changed = True
                                 for field in to_remove:
