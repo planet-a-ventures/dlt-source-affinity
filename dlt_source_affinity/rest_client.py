@@ -75,6 +75,13 @@ def remove_unknown_fields(response: Response, *args: Any, **kwargs: Any) -> None
     We remove these fields to avoid errors when validating the data.
     TODO: remove this when the API is fixed. ASAP. And because this makes me really sad; again: ASAP.
     """
+    ignored_fields = [
+        "connections",
+        "note",
+        "list-multi",
+        "opportunity-multi",
+        "reminder",
+    ]
     if "application/json" in response.headers.get("Content-Type", ""):
         data = response.json()
         if isinstance(data, dict) and "data" in data:
@@ -89,9 +96,9 @@ def remove_unknown_fields(response: Response, *args: Any, **kwargs: Any) -> None
                             if isinstance(fields, list):
                                 to_remove = []
                                 for field in fields:
-                                    if isinstance(field, dict) and (
-                                        field["value"]["type"] == "connections"
-                                        or field["value"]["type"] == "note"
+                                    if (
+                                        isinstance(field, dict)
+                                        and field["value"]["type"] in ignored_fields
                                     ):
                                         to_remove.append(field)
                                         changed = True
