@@ -15,6 +15,7 @@ def load_affinity_data() -> None:
             ListReference(247888, 1869904),
             ListReference(69224, 351112),
             ListReference(126638, 1133940),
+            ListReference(126638, 1899475),
             ListReference(157541, 831583),
         ],
         dev_mode=DEV_MODE,

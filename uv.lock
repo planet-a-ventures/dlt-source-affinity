@@ -278,7 +278,7 @@ workspace = [
 
 [[package]]
 name = "dlt-source-affinity"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "dlt" },
     { name = "pydantic-flatten-rootmodel" },
@@ -286,7 +286,7 @@ dependencies = [
 
 [package.optional-dependencies]
 show = [
-    { name = "dlt", extra = ["duckdb"] },
+    { name = "dlt", extra = ["duckdb", "workspace"] },
     { name = "streamlit" },
     { name = "watchdog" },
 ]
@@ -294,7 +294,6 @@ show = [
 [package.dev-dependencies]
 dev = [
     { name = "datamodel-code-generator" },
-    { name = "dlt", extra = ["workspace"] },
     { name = "pytest" },
 ]
 
@@ -302,6 +301,7 @@ dev = [
 requires-dist = [
     { name = "dlt", specifier = ">=1.17.1" },
     { name = "dlt", extras = ["duckdb"], marker = "extra == 'show'", specifier = ">=1.17.1" },
+    { name = "dlt", extras = ["workspace"], marker = "extra == 'show'", specifier = ">=1.17.1" },
     { name = "pydantic-flatten-rootmodel", specifier = ">=0.1.2" },
     { name = "streamlit", marker = "extra == 'show'", specifier = ">=1.41.1" },
     { name = "watchdog", marker = "extra == 'show'", specifier = ">=6.0.0" },
@@ -311,7 +311,6 @@ provides-extras = ["show"]
 [package.metadata.requires-dev]
 dev = [
     { name = "datamodel-code-generator", specifier = ">=0.26.4" },
-    { name = "dlt", extras = ["workspace"], specifier = ">=1.17.1" },
     { name = "pytest", specifier = ">=8.3.4" },
 ]
 

@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Any
 
 import dlt
@@ -10,11 +11,13 @@ from dlt.sources.helpers.rest_client.paginators import (
     JSONResponseCursorPaginator,
 )
 
+from .model.v2 import ValueType
 from .settings import API_BASE, V2_PREFIX
 from .type_adapters import error_adapter
 
 # Share a session (and thus pool) between all rest clients
 session: Session = None
+logger = logging.getLogger("dlt")
 
 
 def get_v2_rest_client(
@@ -89,10 +92,13 @@ def remove_unknown_fields(response: Response, *args: Any, **kwargs: Any) -> None
                             if isinstance(fields, list):
                                 to_remove = []
                                 for field in fields:
-                                    if isinstance(field, dict) and (
-                                        field["value"]["type"] == "connections"
-                                        or field["value"]["type"] == "note"
+                                    if (
+                                        isinstance(field, dict)
+                                        and field["value"]["type"] not in ValueType
                                     ):
+                                        logger.warning(
+                                            f"Removing field with unknown type: {field['value']['type']}"
+                                        )
                                         to_remove.append(field)
                                         changed = True
                                 for field in to_remove:
