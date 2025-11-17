@@ -10,6 +10,7 @@ from dlt.sources.helpers.rest_client.paginators import (
     JSONResponseCursorPaginator,
 )
 
+from .model.v2 import ValueType
 from .settings import API_BASE, V2_PREFIX
 from .type_adapters import error_adapter
 
@@ -75,13 +76,6 @@ def remove_unknown_fields(response: Response, *args: Any, **kwargs: Any) -> None
     We remove these fields to avoid errors when validating the data.
     TODO: remove this when the API is fixed. ASAP. And because this makes me really sad; again: ASAP.
     """
-    ignored_fields = [
-        "connections",
-        "note",
-        "list-multi",
-        "opportunity-multi",
-        "reminder",
-    ]
     if "application/json" in response.headers.get("Content-Type", ""):
         data = response.json()
         if isinstance(data, dict) and "data" in data:
@@ -98,7 +92,7 @@ def remove_unknown_fields(response: Response, *args: Any, **kwargs: Any) -> None
                                 for field in fields:
                                     if (
                                         isinstance(field, dict)
-                                        and field["value"]["type"] in ignored_fields
+                                        and field["value"]["type"] not in ValueType
                                     ):
                                         to_remove.append(field)
                                         changed = True
