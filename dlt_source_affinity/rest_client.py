@@ -57,8 +57,23 @@ def get_v1_rest_client(
 
 def raise_if_error(response: Response, *args: Any, **kwargs: Any) -> None:
     if response.status_code < 200 or response.status_code >= 300:
-        error = error_adapter.validate_json(response.text)
-        response.reason = "\n".join([e.message for e in error.errors])
+        # Try to parse JSON error response first
+        try:
+            error = error_adapter.validate_json(response.text)
+            response.reason = "\n".join([e.message for e in error.errors])
+        except Exception as e:
+            # If JSON parsing fails, assume non-JSON response (likely HTML for 5XX errors)
+            # For 5XX errors, this enables retry via HTTPError
+            logger.warning(
+                f"Failed to parse error response as JSON: {e}. "
+                f"Status: {response.status_code}, URL: {response.url}, "
+                f"Response preview: {response.text[:200]}..."
+            )
+            if response.status_code >= 500:
+                response.reason = f"Server error ({response.status_code}): Non-JSON response received (likely HTML)"
+            else:
+                response.reason = f"API error ({response.status_code}): Unable to parse error response"
+
         response.raise_for_status()
 
 
