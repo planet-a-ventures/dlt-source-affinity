@@ -939,6 +939,8 @@ class Type3(Enum):
 class EnrichmentSource(Enum):
     AFFINITY_DATA = "affinity-data"
     DEALROOM = "dealroom"
+    EVENTBRITE = "eventbrite"
+    MAILCHIMP = "mailchimp"
     NONE_TYPE_NONE = None
 
 

@@ -6999,6 +6999,8 @@
             "enum": [
               "affinity-data",
               "dealroom",
+              "eventbrite",
+              "mailchimp",
               null
             ],
             "examples": [
@@ -7325,6 +7327,8 @@
             "enum": [
               "affinity-data",
               "dealroom",
+              "eventbrite",
+              "mailchimp",
               null
             ],
             "examples": [
