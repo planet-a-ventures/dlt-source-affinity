@@ -91,7 +91,6 @@ def remove_unknown_fields(response: Response, *args: Any, **kwargs: Any) -> None
     Removes unknown fields from the response.
     This is a workaround for the fact that the API returns unknown fields that are not part of the schema.
     We remove these fields to avoid errors when validating the data.
-    TODO: remove this when the API is fixed. ASAP. And because this makes me really sad; again: ASAP.
     """
     if "application/json" in response.headers.get("Content-Type", ""):
         data = response.json()
@@ -126,9 +125,8 @@ hooks = {
     "response": [
         # print_response,
         raise_if_error,
-        # TODO: remove this when the API is fixed.
         # Workaround for https://github.com/planet-a-ventures/dlt-source-affinity/issues/11
-        remove_unknown_fields,
+        # remove_unknown_fields,
     ]
 }
 MAX_PAGE_LIMIT_V1 = 500
