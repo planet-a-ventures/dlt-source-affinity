@@ -9,6 +9,9 @@ dependencies = [
 dynamic = ["version"]
 author="Planet A GmbH"
 author_email="dev@planet-a.com"
+maintainers = [
+    { name = "Mehmet Celimli", email = "mehmet@planet-a.com" }
+]
 description="A DLT source for the Affinity CRM"
 license = { text = "MIT" }
 classifiers=[
